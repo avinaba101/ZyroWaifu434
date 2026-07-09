@@ -1,7 +1,7 @@
 # ==========================================
-# Creator: MrZyro
-# Telegram: @MrZyro_dev
-# GitHub: https://github.com/MrZyro
+# Creator: fushiguro
+# Bot Name: Anime Catcher
+# Remade for Render & VPS Deployment
 # ==========================================
 
 import logging
@@ -10,7 +10,7 @@ import time
 
 StartTime = time.time()
 
-# enable logging
+# logging सेटअप (Render और VPS दोनों के लिए अनुकूलित)
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     handlers=[logging.FileHandler("log.txt"), logging.StreamHandler()],
@@ -18,11 +18,10 @@ logging.basicConfig(
 )
 
 logging.getLogger("apscheduler").setLevel(logging.ERROR)
-
 logging.getLogger("pyrate_limiter").setLevel(logging.ERROR)
 LOGGER = logging.getLogger(__name__)
 
-# if version < 3.6, stop bot.
+# यदि पाइथन वर्शन 3.6 से पुराना है, तो बोट बंद करें
 if sys.version_info[0] < 3 or sys.version_info[1] < 6:
     LOGGER.error(
         "You MUST have a python version of at least 3.6! Multiple features depend on this. Bot quitting."
@@ -36,7 +35,7 @@ def __list_all_modules():
     import glob
     from os.path import basename, dirname, isfile
 
-    # This generates a list of modules in this folder for the * in __main__ to work.
+    # यह फ़ंक्शन modules फ़ोल्डर के अंदर की सभी .py फ़ाइलों को ऑटोमैटिक लोड करता है
     mod_paths = glob.glob(dirname(__file__) + "/*.py")
     all_modules = [
         basename(f)[:-3]
