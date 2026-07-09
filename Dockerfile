@@ -1,17 +1,23 @@
-# हम यहाँ Debian 12 (Bookworm) आधारित लेटेस्ट और स्टेबल Node इमेज का इस्तेमाल कर रहे हैं
-FROM node:18-bookworm-slim
+# 1. Python का लेटेस्ट स्टेबल और लाइटवेट इमेज इस्तेमाल करें
+FROM python:3.10-slim
 
-# सिस्टम पैकेजेस को बिना किसी पुराने सर्वर एरर के अपडेट और इंस्टॉल करने के लिए
+# 2. सिस्टम के ज़रूरी टूल्स इंस्टॉल करें (जैसे git, ffmpeg आदि)
 RUN apt-get update && apt-get install -y \
     git \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
+# 3. वर्किंग डायरेक्टरी सेट करें
 WORKDIR /usr/src/app
 
-COPY package*.json ./
-RUN npm install
+# 4. requirements.txt फ़ाइल को कॉपी करें
+COPY requirements.txt ./
 
+# 5. बिना किसी एरर के सारे Python पैकेजेस इंस्टॉल करें
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 6. प्रोजेक्ट के बाकी सारे कोड को कॉपी करें
 COPY . .
 
-CMD ["node", "index.js"]
+# 7. बोट की मुख्य फ़ाइल (main.py) को रन करने की कमांड
+CMD ["python", "main.py"]
