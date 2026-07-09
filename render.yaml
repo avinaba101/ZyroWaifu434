@@ -1,0 +1,13 @@
+services:
+  - type: worker
+    name: fushiguro-waifu-bot
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.js || npm start
+    envVars:
+      - key: BOT_NAME
+        value: fushiguro
+      - key: OWNER_NAME
+        value: fushiguro
+        
