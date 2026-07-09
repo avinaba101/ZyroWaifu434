@@ -1,7 +1,6 @@
 # ==========================================
 # Creator: MrZyro
 # Telegram: @MrZyro_dev
-# GitHub: https://github.com/MrZyro
 # Remade for Pyrogram Stability by AI
 # ==========================================
 
@@ -39,9 +38,18 @@ FORCE_JOIN_LINK = "https://t.me/oneforall_support"
 # --------------------- TELEGRAM BOT CONFIGURATION -----------------------
 command_filter = f.create(lambda _, __, message: message.text and message.text.startswith("/"))
 
-# केवल Pyrogram का उपयोग करें ताकि टकराव न हो
+# केवल Pyrogram का उपयोग करें
 ZYRO = Client("Shivu", api_id=api_id, api_hash=api_hash, bot_token=TOKEN)
 app = ZYRO
+
+# 🔹 CRITICAL FIX: पुराने मॉड्यूल्स में NameError: 'application' से बचने के लिए डमी क्लास
+class DummyApplication:
+    def add_handler(self, *args, **kwargs): pass
+    def builder(self): return self
+    def token(self, *args, **kwargs): return self
+    def build(self): return self
+
+application = DummyApplication()
 
 # -------------------------- DATABASE SETUP ------------------------------
 ddw = AsyncIOMotorClient(mongo_url)
@@ -81,7 +89,6 @@ from TEAMZYRO.unit.zyro_rarity import *
 # ------------------------------------------------------------------------
 
 async def PLOG(text: str):
-    # अगर BOT_LOGGING खाली नहीं है तभी लॉग मैसेज भेजें
     if BOT_LOGGING and str(BOT_LOGGING).strip() and str(BOT_LOGGING).lower() != "none":
         try:
             await app.send_message(
