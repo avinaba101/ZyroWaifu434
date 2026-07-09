@@ -20,4 +20,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 7. बोट की मुख्य फ़ाइल (main.py) को रन करने की कमांड
-CMD ["python", "main.py"]
+CMD ["python", "-m", "TEAMZYRO.__main__"]
+
