@@ -2,16 +2,13 @@
 # Creator: MrZyro
 # Telegram: @MrZyro_dev
 # GitHub: https://github.com/MrZyro
+# Remade for Pyrogram Stability by AI
 # ==========================================
 
-# ------------------------------ IMPORTS ---------------------------------
 import logging
 import os
-from telegram.ext import Application
 from motor.motor_asyncio import AsyncIOMotorClient
 from pyrogram import Client, filters as f
-#from pyrogram.types import x
-from aiogram import Bot, Dispatcher, types
 
 # --------------------------- LOGGING SETUP ------------------------------
 logging.basicConfig(
@@ -26,7 +23,6 @@ logging.basicConfig(
 
 logging.getLogger("httpx").setLevel(logging.ERROR)
 logging.getLogger("pyrogram").setLevel(logging.ERROR)
-logging.getLogger("telegram").setLevel(logging.ERROR)
 
 def LOGGER(name: str) -> logging.Logger:
     return logging.getLogger(name)
@@ -38,14 +34,15 @@ from config import (
     MUSJ_JOIN, IMGBB_API_KEY, START_MEDIA, PHOTO_URL, STATS_IMG
 ) 
 
-FORCE_JOIN_LINK = "https://t.me/oneforall_support"  # Updated dynamically on bot startup
+FORCE_JOIN_LINK = "https://t.me/oneforall_support"  
 
 # --------------------- TELEGRAM BOT CONFIGURATION -----------------------
 command_filter = f.create(lambda _, __, message: message.text and message.text.startswith("/"))
-application = Application.builder().token(TOKEN).build()
+
+# केवल Pyrogram का उपयोग करें ताकि टकराव न हो
 ZYRO = Client("Shivu", api_id=api_id, api_hash=api_hash, bot_token=TOKEN)
-bot = Bot(token=TOKEN)
-dp = Dispatcher()
+app = ZYRO
+
 # -------------------------- DATABASE SETUP ------------------------------
 ddw = AsyncIOMotorClient(mongo_url)
 db = ddw[DB_NAME]
@@ -56,11 +53,10 @@ group_user_totals_collection = db['group_user_totalsssssss']
 top_global_groups_collection = db['top_global_groups']
 pm_users = db['total_pm_users']
 discounts_collection = db['discounts']
-# -------------------------- GLOBAL VARIABLES ----------------------------
-app = ZYRO
 
-x = 0000000
-# --------------------------- STRIN ---------------------------------------
+backup_ddw = AsyncIOMotorClient(backup_mongo_url)
+
+# -------------------------- GLOBAL VARIABLES ----------------------------
 locks = {}
 message_counters = {}
 spam_counters = {}
@@ -85,13 +81,14 @@ from TEAMZYRO.unit.zyro_rarity import *
 # ------------------------------------------------------------------------
 
 async def PLOG(text: str):
-    await app.send_message(
-       chat_id=BOT_LOGGING,
-       text=text
-   )
+    # अगर BOT_LOGGING खाली नहीं है तभी लॉग मैसेज भेजें
+    if BOT_LOGGING and str(BOT_LOGGING).strip() and str(BOT_LOGGING).lower() != "none":
+        try:
+            await app.send_message(
+               chat_id=int(BOT_LOGGING),
+               text=text
+            )
+        except Exception:
+            pass
 
 # ---------------------------- END OF CODE ------------------------------
-
-
-backup_ddw = AsyncIOMotorClient(backup_mongo_url)
-
