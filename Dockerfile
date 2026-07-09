@@ -1,21 +1,17 @@
-FROM python:3.8.5-slim-buster
+# हम यहाँ Debian 12 (Bookworm) आधारित लेटेस्ट और स्टेबल Node इमेज का इस्तेमाल कर रहे हैं
+FROM node:18-bookworm-slim
 
-ENV PIP_NO_CACHE_DIR=1
+# सिस्टम पैकेजेस को बिना किसी पुराने सर्वर एरर के अपडेट और इंस्टॉल करने के लिए
+RUN apt-get update && apt-get install -y \
+    git \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install git and other needed tools
-RUN apt-get update && apt-get install -y git gcc && apt-get clean
+WORKDIR /usr/src/app
 
-# Upgrade pip and setuptools
-RUN pip3 install --upgrade pip setuptools
+COPY package*.json ./
+RUN npm install
 
-# Copy application code
-COPY . /app/
+COPY . .
 
-# Set working directory
-WORKDIR /app/
-
-# Install Python dependencies
-RUN pip3 install --no-cache-dir -U -r requirements.txt
-
-# Run the bot
-CMD ["python3", "-m", "TEAMZYRO"]
+CMD ["node", "index.js"]
