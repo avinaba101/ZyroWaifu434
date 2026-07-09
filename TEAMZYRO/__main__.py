@@ -114,8 +114,13 @@ def main() -> None:
     except Exception:
         pass
 
-    # बॉट को चालू (Live) रखना
-    application.run_polling(drop_pending_updates=True)
+    # बॉट को चालू (Live) रखना और मैसेजेस सुनना (FIXED BY AI)
+    from pyrogram import idle
+    idle()
+    try:
+        ZYRO.stop()
+    except:
+        pass
     
 
 if __name__ == "__main__":
