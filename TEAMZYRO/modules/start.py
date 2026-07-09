@@ -2,12 +2,14 @@
 # Creator: fushiguro
 # Bot Name: Anime Catcher
 # Remade for Render & VPS Deployment
+# Fixed for Stability by AI
 # ==========================================
 
 import os
 import importlib.util
 import random
 import time
+import asyncio
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from TEAMZYRO import *
@@ -22,21 +24,20 @@ def get_uptime():
     minutes, seconds = divmod(remainder, 60)
     return f"{hours}h {minutes}m {seconds}s"
 
-# START_MEDIA is imported from TEAMZYRO package
-
 # 🔹 Function to Generate Private Start Message & Buttons
 async def generate_start_message(client, message):
     bot_user = await client.get_me()
-    # बोट का नाम यहाँ डिफ़ॉल्ट रूप से Anime Catcher रहेगा
     bot_name = "Anime Catcher"
     ping = round(time.time() - message.date.timestamp(), 2)
+    if ping < 0:
+        ping = 0
     uptime = get_uptime()
     
     caption = (
         f"🍃 𝖦𝗋𝖾𝖾𝗍𝗂𝗇𝗀𝗌, 𝖨'𝗆 <b>{bot_name}</b> 🫧\n\n"
         f"<blockquote>━━━━━━━▧▣▧━━━━━━━\n"
-        f"⦾ <b>𝖶𝖧𝖤𝖱𝖤:</b> 𝖨 𝗌𝗉𝖺𝗐𝗇 𝖺𝗇𝗂𝗆𝖾 𝖼𝗁𝖺𝗋𝖺𝖼𝗍𝖾𝗋𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝖼𝗁𝖺𝗍 𝖿𝗈𝗋 𝗎𝗌𝖾𝗋𝗌 𝗍𝗈 𝗀𝗋𝖺𝖻.\n"
-        f"⦾ <b>𝖧𝖮𝖶 𝖳𝖮 𝖴𝖲𝖤:</b> 𝖠𝖽𝖽 𝗆𝖾 𝗍𝗈 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝖺𝗇𝖽 𝗎𝗌𝖾 /help 𝖿𝗈𝗋 𝖼𝗈𝗆𝗆𝖺𝗇𝖽𝗌.\n"
+        f"⦾ <b>𝖶𝖧𝖤𝖱𝖤:</b> 𝖨 𝗌𝗉𝖺𝗐𝗇 𝖺𝗇𝗂𝗆𝖾 𝖼𝗁𝖺𝗋𝖺𝖼𝖾𝗋𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝖼𝗁𝖺 𝖿𝗈𝗋 𝗎𝗌𝖾𝗋𝗌 𝗍𝗈 𝗀𝗋𝖺𝖻.\n"
+        f"⦾ <b>𝖧𝖮𝖶 𝖳𝖮 𝖴𝖲𝖤:</b> 𝖠𝖽𝖽 𝗆𝖾 𝗍𝗈 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝖺𝗇𝖽 𝗎𝗌𝖾 /help 𝖿𝗈𝗋 𝖼command𝗌.\n"
         f"━━━━━━━▧▣▧━━━━━━━\n"
         f"⚡ <b>𝖯𝖨𝖭𝖦:</b> {ping} ms\n"
         f"⏳ <b>𝖴𝖯𝖳𝖨𝖬𝖤:</b> {uptime}</blockquote>"
@@ -47,26 +48,19 @@ async def generate_start_message(client, message):
         [InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url=SUPPORT_CHAT), 
          InlineKeyboardButton("Cʜᴀɴɴᴇʟ", url=UPDATE_CHAT)],
         [InlineKeyboardButton("Hᴇʟᴘ", callback_data="open_help")],
-        [InlineKeyboardButton("Dᴇᴠᴇʟᴏᴘᴇʀ: ғᴜsʜɪɢᴜʀᴏ", url=f"https://t.me/{bot_user.username}")], # यहाँ अपना पर्सनल टेलीग्राम हैंडल या बोट का लिंक डाल सकते हो
+        [InlineKeyboardButton("Dᴇᴠᴇʟᴏᴘᴇʀ: ғᴜsʜɪɢᴜʀᴏ", url=f"https://t.me/{bot_user.username}")],
     ]
     
     return caption, buttons
 
 # 🔹 Function to Generate Group Start Message & Buttons
 async def generate_group_start_message(client):
+    bot_user = await client.get_me()
     caption = (
-        f"🍃 𝖨'𝗆 <b>Anime Catcher</b> 🫧\n\n"
-        f"<blockquote>𝖨 𝗌𝗉𝖺𝗐𝗇 𝖺𝗇𝗂𝗆𝖾 𝖼𝗁𝖺𝗋𝖺𝖼𝗍𝖾𝗋𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝗐𝗂𝗍ʜ 𝗆𝖾𝗌𝗌𝖺𝗀𝖾 𝖼𝗈𝗎𝗇𝗍𝗌 𝖿𝗈𝗋 𝗉𝗅𝖺𝗒𝖾ʀ𝗌 𝗍𝗈 /guess.\n"
+        f"🍃 𝖨'姆 <b>Anime Catcher</b> 🫧\n\n"
+        f"<blockquote>𝖨 𝗌𝗉𝖺𝗐𝗇 𝖺𝗇𝗂𝗆𝖾 𝖼𝗁𝖺𝗋𝖺𝖼𝗍𝖾𝗋𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝗐𝗂𝗍ʜ 𝗆𝖾𝗌𝗌𝖺𝗀𝖾 𝖼𝗈𝗎𝗇𝗍𝗌 𝖿𝗈𝗋 𝗉??𝖺𝗒𝖾ʀ𝗌 𝗍𝗈 /guess.\n"
         f"𝖴𝗌𝖾 /help 𝖿ᴏʀ ᴍᴏʀᴇ ɪɴғᴏ.</blockquote>"
     )
-    buttons = [
-        [
-            InlineKeyboardButton("Aᴅᴅ Mᴇ", url=f"https://t.me/{await client.get_me().then(lambda x: x.username)}?startgroup=true" if hasattr(client, 'get_me') else "#"),
-            InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url=SUPPORT_CHAT)
-        ]
-    ]
-    # ऊपर वाले कोड को ज़्यादा स्टेबल और एरर-फ्री रखने के लिए नीचे सिंपल बटन सेटअप किया है:
-    bot_user = await client.get_me()
     buttons = [
         [
             InlineKeyboardButton("Aᴅᴅ Mᴇ", url=f"https://t.me/{bot_user.username}?startgroup=true"),
@@ -77,9 +71,9 @@ async def generate_group_start_message(client):
 
 # 🔹 Send Media (Helper)
 async def send_media_message(message, media, caption, buttons):
-    if media.lower().endswith(('.png', '.jpg', '.jpeg')):
+    if str(media).lower().endswith(('.png', '.jpg', '.jpeg')):
         await message.reply_photo(photo=media, caption=caption, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.HTML)
-    elif media.lower().endswith('.gif'):
+    elif str(media).lower().endswith('.gif'):
         await message.reply_animation(animation=media, caption=caption, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.HTML)
     else:
         await message.reply_video(video=media, caption=caption, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.HTML)
@@ -102,10 +96,14 @@ async def start_private_command(client, message):
     caption, buttons = await generate_start_message(client, message)
     media = random.choice(START_MEDIA)
 
-    await app.send_message(
-        chat_id=BOT_LOGGING,
-        text=f"{message.from_user.mention} ᴊᴜsᴛ sᴛᴀʀᴛᴇᴅ ᴛʜᴇ ʙᴏᴛ.\n\n<b>ᴜsᴇʀ ɪᴅ :</b> <code>{message.from_user.id}</code>\n<b>ᴜsᴇʀɴᴀᴍᴇ :</b> @{message.from_user.username}",
-    )
+    if BOT_LOGGING and str(BOT_LOGGING).strip().lower() != "none":
+        try:
+            await app.send_message(
+                chat_id=int(BOT_LOGGING),
+                text=f"{message.from_user.mention} ᴊᴜsᴛ sᴛᴀʀᴛᴇᴅ ᴛʜᴇ ʙᴏᴛ.\n\n<b>ᴜsᴇʀ ɪᴅ :</b> <code>{message.from_user.id}</code>\n<b>ᴜsᴇʀɴᴀᴍᴇ :</b> @{message.from_user.username}",
+            )
+        except Exception:
+            pass
 
     await send_media_message(message, media, caption, buttons)
 
@@ -127,13 +125,12 @@ def find_help_modules():
 # 🔹 Help Button Click Handler
 @app.on_callback_query(filters.regex("^open_help$"))
 async def show_help_menu(client, query: CallbackQuery):
-    time.sleep(1)
     buttons = find_help_modules()
     buttons.append([InlineKeyboardButton("⬅ Back", callback_data="back_to_home")])
 
     text = (
         "⚙️ <b>𝖧𝖤𝖫𝖯 𝖬𝖤𝖭𝖴</b>\n\n"
-        "<blockquote>ᴄʜᴏᴏsᴇ ᴛʜᴇ ᴄᴀᴛᴇɢᴏʀʏ ғᴏʀ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴɴᴀ ɢᴇᴛ ʜᴇʟᴩ.\n\n"
+        "<blockquote>ᴄʜᴏᴏsᴇ ᴛʜᴇ ᴄᴀᴛᴇɢᴏʀYZ ғᴏʀ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴɴᴀ ɢᴇᴛ ʜᴇʟᴩ.\n\n"
         "ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs ᴄᴀɴ ʙᴇ ᴜsᴇᴅ ᴡɪᴛʜ : /</blockquote>"
     )
 
@@ -144,16 +141,18 @@ async def show_help_menu(client, query: CallbackQuery):
             parse_mode=enums.ParseMode.HTML
         )
     except Exception:
-        await query.message.edit_text(
-            text=text,
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML
-        )
+        try:
+            await query.message.edit_text(
+                text=text,
+                reply_markup=InlineKeyboardMarkup(buttons),
+                parse_mode=enums.ParseMode.HTML
+            )
+        except Exception:
+            pass
 
 # 🔹 Individual Module Help Handler
 @app.on_callback_query(filters.regex(r"^help_(.+)"))
 async def show_help(client, query: CallbackQuery):
-    time.sleep(1)
     module_name = query.data.split("_", 1)[1]
     try:
         module_data = HELP_DATA.get(module_name, {})
@@ -169,18 +168,20 @@ async def show_help(client, query: CallbackQuery):
                 parse_mode=enums.ParseMode.HTML
             )
         except Exception:
-            await query.message.edit_text(
-                text=full_text,
-                reply_markup=InlineKeyboardMarkup(buttons),
-                parse_mode=enums.ParseMode.HTML
-            )
+            try:
+                await query.message.edit_text(
+                    text=full_text,
+                    reply_markup=InlineKeyboardMarkup(buttons),
+                    parse_mode=enums.ParseMode.HTML
+                )
+            except Exception:
+                pass
     except Exception as e:
         await query.answer("Help load karne me error aayi!")
 
 # 🔹 Back to Home
 @app.on_callback_query(filters.regex("^back_to_home$"))
 async def back_to_home(client, query: CallbackQuery):
-    time.sleep(1)
     caption, buttons = await generate_start_message(client, query.message)
     try:
         await query.message.edit_caption(
@@ -189,89 +190,12 @@ async def back_to_home(client, query: CallbackQuery):
             parse_mode=enums.ParseMode.HTML
         )
     except Exception:
-        await query.message.edit_text(
-            text=caption,
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML
-        )
-    media = random.choice(START_MEDIA)
-    await send_media_message(message, media, caption, buttons)
-
-# 🔹 Function to Find Help Modules
-def find_help_modules():
-    buttons = []
-    for module_name, module_data in HELP_DATA.items():
-        button_name = module_data.get("HELP_NAME", "Unknown")
-        buttons.append(InlineKeyboardButton(button_name, callback_data=f"help_{module_name}"))
-    return [buttons[i : i + 3] for i in range(0, len(buttons), 3)]
-
-# 🔹 Help Button Click Handler
-@app.on_callback_query(filters.regex("^open_help$"))
-async def show_help_menu(client, query: CallbackQuery):
-    time.sleep(1)
-    buttons = find_help_modules()
-    buttons.append([InlineKeyboardButton("⬅ Back", callback_data="back_to_home")])
-
-    text = (
-        "⚙️ <b>𝖧𝖤𝖫𝖯 𝖬𝖤𝖭𝖴</b>\n\n"
-        "<blockquote>ᴄʜᴏᴏsᴇ ᴛʜᴇ ᴄᴀᴛᴇɢᴏʀʏ ғᴏʀ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴɴᴀ ɢᴇᴛ ʜᴇʟᴩ.\n\n"
-        "ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs ᴄᴀɴ ʙᴇ ᴜsᴇᴅ ᴡɪᴛʜ : /</blockquote>"
-    )
-
-    try:
-        await query.message.edit_caption(
-            caption=text,
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML
-        )
-    except Exception:
-        await query.message.edit_text(
-            text=text,
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML
-        )
-
-# 🔹 Individual Module Help Handler
-@app.on_callback_query(filters.regex(r"^help_(.+)"))
-async def show_help(client, query: CallbackQuery):
-    time.sleep(1)
-    module_name = query.data.split("_", 1)[1]
-    try:
-        module_data = HELP_DATA.get(module_name, {})
-        help_text = module_data.get("HELP", "Is module ka koi help nahi hai.")
-        buttons = [[InlineKeyboardButton("⬅ Back", callback_data="open_help")]]
-        
-        full_text = f"<b>{module_name.upper()} Help:</b>\n\n{help_text}"
-        
         try:
-            await query.message.edit_caption(
-                caption=full_text,
+            await query.message.edit_text(
+                text=caption,
                 reply_markup=InlineKeyboardMarkup(buttons),
                 parse_mode=enums.ParseMode.HTML
             )
         except Exception:
-            await query.message.edit_text(
-                text=full_text,
-                reply_markup=InlineKeyboardMarkup(buttons),
-                parse_mode=enums.ParseMode.HTML
-            )
-    except Exception as e:
-        await query.answer("Help load karne me error aayi!")
-
-# 🔹 Back to Home
-@app.on_callback_query(filters.regex("^back_to_home$"))
-async def back_to_home(client, query: CallbackQuery):
-    time.sleep(1)
-    caption, buttons = await generate_start_message(client, query.message)
-    try:
-        await query.message.edit_caption(
-            caption=caption,
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML
-        )
-    except Exception:
-        await query.message.edit_text(
-            text=caption,
-            reply_markup=InlineKeyboardMarkup(buttons),
-            parse_mode=enums.ParseMode.HTML
-        )
+            pass
+            
