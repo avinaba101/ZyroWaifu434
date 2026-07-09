@@ -2,7 +2,7 @@
 # Creator: fushiguro
 # Bot Name: Anime Catcher
 # Remade for Render & VPS Deployment
-# Fixed for Stability by AI
+# Fully Fixed Help Menu & Callbacks by AI
 # ==========================================
 
 import os
@@ -36,7 +36,7 @@ async def generate_start_message(client, message):
     caption = (
         f"🍃 𝖦𝗋𝖾𝖾𝗍𝗂𝗇𝗀𝗌, 𝖨'𝗆 <b>{bot_name}</b> 🫧\n\n"
         f"<blockquote>━━━━━━━▧▣▧━━━━━━━\n"
-        f"⦾ <b>𝖶𝖧𝖤𝖱𝖤:</b> 𝖨 𝗌𝗉𝖺𝗐𝗇 𝖺𝗇𝗂𝗆𝖾 𝖼𝗁𝖺𝗋𝖺𝖼𝖾𝗋𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝖼𝗁𝖺 𝖿𝗈𝗋 𝗎𝗌𝖾𝗋𝗌 𝗍𝗈 𝗀𝗋𝖺𝖻.\n"
+        f"⦾ <b>𝖶𝖧𝖤𝖱𝖤:</b> 𝖨 𝗌𝗉𝖺𝗐𝗇 𝖺𝗇𝗂𝗆𝖾 𝖼𝗁𝖺𝗋𝖺𝖼𝗍𝖾𝗋𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝖼𝗁𝖺 𝖿𝗈𝗋 𝗎𝗌𝖾𝗋𝗌 𝗍𝗈 𝗀𝗋𝖺𝖻.\n"
         f"⦾ <b>𝖧𝖮𝖶 𝖳𝖮 𝖴𝖲𝖤:</b> 𝖠𝖽𝖽 𝗆𝖾 𝗍𝗈 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝖺𝗇𝖽 𝗎𝗌𝖾 /help 𝖿𝗈𝗋 𝖼command𝗌.\n"
         f"━━━━━━━▧▣▧━━━━━━━\n"
         f"⚡ <b>𝖯𝖨𝖭𝖦:</b> {ping} ms\n"
@@ -45,10 +45,10 @@ async def generate_start_message(client, message):
 
     buttons = [
         [InlineKeyboardButton("Aᴅᴅ Tᴏ Yᴏᴜʀ Gʀᴏᴜᴘ ", url=f"https://t.me/{bot_user.username}?startgroup=true")],
-        [InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url=SUPPORT_CHAT), 
-         InlineKeyboardButton("Cʜᴀɴɴᴇʟ", url=UPDATE_CHAT)],
+        [InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url="https://t.me/+hLhjBd4AT3cyNzFl"), 
+         InlineKeyboardButton("Cʜᴀɴɴᴇʟ", url="https://t.me/+hLhjBd4AT3cyNzFl")],
         [InlineKeyboardButton("Hᴇʟᴘ", callback_data="open_help")],
-        [InlineKeyboardButton("Dᴇᴠᴇʟᴏᴘᴇʀ: ғᴜsʜɪɢᴜʀᴏ", url=f"https://t.me/{bot_user.username}")],
+        [InlineKeyboardButton("Dᴇᴠᴇʟᴏᴘᴇʀ: ғᴜsʜɪɢᴜʀᴏ", url="https://t.me/darkXmusic")],
     ]
     
     return caption, buttons
@@ -58,13 +58,13 @@ async def generate_group_start_message(client):
     bot_user = await client.get_me()
     caption = (
         f"🍃 𝖨'姆 <b>Anime Catcher</b> 🫧\n\n"
-        f"<blockquote>𝖨 𝗌𝗉𝖺𝗐𝗇 𝖺𝗇𝗂𝗆𝖾 𝖼𝗁𝖺𝗋𝖺𝖼𝗍𝖾𝗋𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝗐𝗂𝗍ʜ 𝗆𝖾𝗌𝗌𝖺𝗀𝖾 𝖼𝗈𝗎𝗇𝗍𝗌 𝖿𝗈𝗋 𝗉??𝖺𝗒𝖾ʀ𝗌 𝗍𝗈 /guess.\n"
+        f"<blockquote>𝖨 𝗌𝗉𝖺spawn 𝖺𝗇𝗂𝗆𝖾 𝖼𝗁𝖺𝗋𝖺𝖼𝗍𝖾𝗋𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝗐𝗂𝗍ʜ 𝗆𝖾𝗌𝗌𝖺𝗀𝖾 𝖼𝗈𝗎นต์𝗌 𝖿𝗈𝗋 𝗉𝗅𝖺𝗒𝖾ʀ𝗌 𝗍𝗈 /guess.\n"
         f"𝖴𝗌𝖾 /help 𝖿ᴏʀ ᴍᴏʀᴇ ɪɴғᴏ.</blockquote>"
     )
     buttons = [
         [
             InlineKeyboardButton("Aᴅᴅ Mᴇ", url=f"https://t.me/{bot_user.username}?startgroup=true"),
-            InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url=SUPPORT_CHAT)
+            InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url="https://t.me/+hLhjBd4AT3cyNzFl")
         ]
     ]
     return caption, buttons
@@ -114,6 +114,25 @@ async def start_group_command(client, message):
     media = random.choice(START_MEDIA)
     await send_media_message(message, media, caption, buttons)
 
+# 🔹 /help Command Text Handler (For Direct Commands)
+@app.on_message(filters.command("help"))
+async def help_command_handler(client, message):
+    buttons = find_help_modules()
+    if message.chat.type == enums.ChatType.PRIVATE:
+        buttons.append([InlineKeyboardButton("⬅ Back", callback_data="back_to_home")])
+    
+    text = (
+        "⚙️ <b>𝖧𝖤𝖫𝖯 𝖬𝖤𝖭𝖴</b>\n\n"
+        "<blockquote>ᴄʜᴏᴏsᴇ ᴛʜᴇ ᴄᴀᴛᴇɢᴏʀʏ ғᴏʀ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴɴᴀ ɢᴇᴛ ʜᴇʟᴩ.\n\n"
+        "ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs ᴄᴀɴ ʙᴇ ᴜsᴇᴅ ᴡɪᴛʜ : /</blockquote>"
+    )
+    
+    if message.chat.type == enums.ChatType.PRIVATE:
+        media = random.choice(START_MEDIA)
+        await send_media_message(message, media, text, buttons)
+    else:
+        await message.reply_text(text, reply_markup=InlineKeyboardMarkup(buttons), parse_mode=enums.ParseMode.HTML)
+
 # 🔹 Function to Find Help Modules
 def find_help_modules():
     buttons = []
@@ -130,8 +149,8 @@ async def show_help_menu(client, query: CallbackQuery):
 
     text = (
         "⚙️ <b>𝖧𝖤𝖫𝖯 𝖬𝖤𝖭𝖴</b>\n\n"
-        "<blockquote>ᴄʜᴏᴏsᴇ ᴛʜᴇ ᴄᴀᴛᴇɢᴏʀYZ ғᴏʀ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴɴᴀ ɢᴇᴛ ʜᴇʟᴩ.\n\n"
-        "ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs ᴄᴀɴ ʙᴇ ᴜsᴇᴅ ᴡɪᴛʜ : /</blockquote>"
+        "<blockquote>ᴄʜᴏᴏsᴇ ᴛʜᴇ ᴄᴀᴛᴇɢᴏʀʏ ғᴏʀ ᴡʜɪᴄʜ ʏᴏᴜ ᴡᴀɴɴᴀ ɢᴇᴛ ʜᴇʟᴩ.\n\n"
+        "ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs ᴄᴀɴ ʙᴇ ᴜsᴇ दें ᴡɪᴛʜ : /</blockquote>"
     )
 
     try:
@@ -149,6 +168,7 @@ async def show_help_menu(client, query: CallbackQuery):
             )
         except Exception:
             pass
+    await query.answer()
 
 # 🔹 Individual Module Help Handler
 @app.on_callback_query(filters.regex(r"^help_(.+)"))
@@ -176,8 +196,9 @@ async def show_help(client, query: CallbackQuery):
                 )
             except Exception:
                 pass
-    except Exception as e:
-        await query.answer("Help load karne me error aayi!")
+    except Exception:
+        pass
+    await query.answer()
 
 # 🔹 Back to Home
 @app.on_callback_query(filters.regex("^back_to_home$"))
@@ -198,4 +219,4 @@ async def back_to_home(client, query: CallbackQuery):
             )
         except Exception:
             pass
-            
+    await query.answer()
