@@ -1,25 +1,47 @@
 # ==========================================
-# Creator: MrZyro
-# Telegram: @MrZyro_dev
-# GitHub: https://github.com/MrZyro
+# Creator: fushiguro
+# Remade for: Render & VPS Deployment
 # ==========================================
 
 from TEAMZYRO import *
 import importlib
 import logging
+import sys
+import TEAMZYRO
 from TEAMZYRO.modules import ALL_MODULES
+from flask import Flask
+import threading
+import os
+
+# Render के पोर्ट बाइंडिंग एरर (Port Scan Timeout) से बचने के लिए डमी वेब सर्वर
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "fushiguro Waifu Bot is Running Perfectly!"
+
+def run_server():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+def keep_alive():
+    t = threading.Thread(target=run_server)
+    t.daemon = True
+    t.start()
 
 
 def main() -> None:
+    # Render के लिए बैकग्राउंड वेब सर्वर शुरू करें
+    keep_alive()
+    
+    # मॉड्यूल्स लोड करना
     for module_name in ALL_MODULES:
         imported_module = importlib.import_module("TEAMZYRO.modules." + module_name)
     LOGGER("TEAMZYRO.modules").info("𝐀𝐥𝐥 𝐅𝐞𝐚𝐭𝐮𝐫𝐞𝐬 𝐋𝐨𝐚𝐝𝐞𝐝 𝐁𝐚𝐛𝐲🥳...")
 
     ZYRO.start()
 
-    # Verify FORCE_JOIN admin permissions and get/generate invite link
-    import sys
-    import TEAMZYRO
+    # FORCE_JOIN एडमिन परमिशन वेरिफिकेशन
     try:
         try:
             chat_target = int(FORCE_JOIN)
@@ -35,14 +57,11 @@ def main() -> None:
         TEAMZYRO.FORCE_JOIN_LINK = invite_link
         LOGGER("TEAMZYRO").info(f"Successfully verified FORCE_JOIN admin rights. Link: {invite_link}")
     except Exception as e:
-        LOGGER("TEAMZYRO").error(
+        LOGGER("fushiguro-Log").error(
             "\n"
             "=======================================================================\n"
             "❌ CRITICAL STARTUP ERROR:\n"
             f"Bot is NOT an admin in the FORCE_JOIN channel/chat ({FORCE_JOIN})!\n"
-            "Please ensure the bot is added to the channel as an Admin and has\n"
-            "permission to invite users.\n"
-            f"Details: {e}\n"
             "======================================================================="
         )
         try:
@@ -51,7 +70,7 @@ def main() -> None:
             pass
         sys.exit(1)
 
-    # Verify BOT_LOGGING permissions by sending a startup message
+    # BOT_LOGGING परमिशन वेरिफिकेशन और स्टार्टअप मैसेज
     try:
         try:
             log_target = int(BOT_LOGGING)
@@ -60,18 +79,15 @@ def main() -> None:
             
         test_msg = ZYRO.send_message(
             chat_id=log_target,
-            text="⚙️ **WaifuBot Startup Notification**:\nSuccessfully connected & verified write permissions in the logs channel!"
+            text="⚙️ **fushiguro WaifuBot Startup Notification**:\nSuccessfully connected & verified write permissions in the logs channel!"
         )
         LOGGER("TEAMZYRO").info(f"Successfully verified BOT_LOGGING permissions. Test message sent (ID: {test_msg.id}).")
     except Exception as e:
-        LOGGER("TEAMZYRO").error(
+        LOGGER("fushiguro-Log").error(
             "\n"
             "=======================================================================\n"
             "❌ CRITICAL STARTUP ERROR:\n"
             f"Bot cannot post/send messages to BOT_LOGGING chat ({BOT_LOGGING})!\n"
-            "Please ensure the bot is added to the log channel/group and has permission\n"
-            "to post messages.\n"
-            f"Details: {e}\n"
             "======================================================================="
         )
         try:
@@ -80,14 +96,22 @@ def main() -> None:
             pass
         sys.exit(1)
 
-    application.run_polling(drop_pending_updates=True)
+    # स्टार्टअप लोगो और मैसेज (यह बॉट पोलिंग शुरू होने से पहले दिखेगा)
     LOGGER("TEAMZYRO").info(
-        "╔═════ஜ۩۞۩ஜ════╗\n  ☠︎︎MADE BY TEAMZYRO☠︎︎\n╚═════ஜ۩۞۩ஜ════╝"
+        "\n╔════════════════════════╗\n"
+        "  ☠︎︎ MADE BY FUSHIGURO ☠︎︎\n"
+        "╚════════════════════════╝"
     )
-    send_start_message()
+    
+    try:
+        send_start_message()
+    except Exception:
+        pass
+
+    # बॉट को चालू (Live) रखना
+    application.run_polling(drop_pending_updates=True)
     
 
 if __name__ == "__main__":
     main()
-    
     
