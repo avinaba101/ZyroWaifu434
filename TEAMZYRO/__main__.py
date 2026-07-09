@@ -41,60 +41,66 @@ def main() -> None:
 
     ZYRO.start()
 
-    # FORCE_JOIN एडमिन परमिशन वेरिफिकेशन
-    try:
+    # FORCE_JOIN एडमिन परमिशन वेरिफिकेशन (FIXED BY AI)
+    if FORCE_JOIN and str(FORCE_JOIN).strip() and str(FORCE_JOIN).lower() != "none":
         try:
-            chat_target = int(FORCE_JOIN)
-        except ValueError:
-            chat_target = FORCE_JOIN
-            
-        chat_obj = ZYRO.get_chat(chat_target)
-        invite_link = chat_obj.invite_link
-        if not invite_link:
-            invite = ZYRO.create_chat_invite_link(chat_target)
-            invite_link = invite.invite_link
-            
-        TEAMZYRO.FORCE_JOIN_LINK = invite_link
-        LOGGER("TEAMZYRO").info(f"Successfully verified FORCE_JOIN admin rights. Link: {invite_link}")
-    except Exception as e:
-        LOGGER("fushiguro-Log").error(
-            "\n"
-            "=======================================================================\n"
-            "❌ CRITICAL STARTUP ERROR:\n"
-            f"Bot is NOT an admin in the FORCE_JOIN channel/chat ({FORCE_JOIN})!\n"
-            "======================================================================="
-        )
-        try:
-            ZYRO.stop()
-        except:
-            pass
-        sys.exit(1)
+            try:
+                chat_target = int(FORCE_JOIN)
+            except ValueError:
+                chat_target = FORCE_JOIN
+                
+            chat_obj = ZYRO.get_chat(chat_target)
+            invite_link = chat_obj.invite_link
+            if not invite_link:
+                invite = ZYRO.create_chat_invite_link(chat_target)
+                invite_link = invite.invite_link
+                
+            TEAMZYRO.FORCE_JOIN_LINK = invite_link
+            LOGGER("TEAMZYRO").info(f"Successfully verified FORCE_JOIN admin rights. Link: {invite_link}")
+        except Exception as e:
+            LOGGER("fushiguro-Log").error(
+                "\n"
+                "=======================================================================\n"
+                "❌ CRITICAL STARTUP ERROR:\n"
+                f"Bot is NOT an admin in the FORCE_JOIN channel/chat ({FORCE_JOIN})!\n"
+                "======================================================================="
+            )
+            try:
+                ZYRO.stop()
+            except:
+                pass
+            sys.exit(1)
+    else:
+        LOGGER("TEAMZYRO").info("FORCE_JOIN is empty or None. Skipping force join check... Bot will start normally!")
 
     # BOT_LOGGING परमिशन वेरिफिकेशन और स्टार्टअप मैसेज
-    try:
+    if BOT_LOGGING and str(BOT_LOGGING).strip() and str(BOT_LOGGING).lower() != "none":
         try:
-            log_target = int(BOT_LOGGING)
-        except ValueError:
-            log_target = BOT_LOGGING
-            
-        test_msg = ZYRO.send_message(
-            chat_id=log_target,
-            text="⚙️ **fushiguro WaifuBot Startup Notification**:\nSuccessfully connected & verified write permissions in the logs channel!"
-        )
-        LOGGER("TEAMZYRO").info(f"Successfully verified BOT_LOGGING permissions. Test message sent (ID: {test_msg.id}).")
-    except Exception as e:
-        LOGGER("fushiguro-Log").error(
-            "\n"
-            "=======================================================================\n"
-            "❌ CRITICAL STARTUP ERROR:\n"
-            f"Bot cannot post/send messages to BOT_LOGGING chat ({BOT_LOGGING})!\n"
-            "======================================================================="
-        )
-        try:
-            ZYRO.stop()
-        except:
-            pass
-        sys.exit(1)
+            try:
+                log_target = int(BOT_LOGGING)
+            except ValueError:
+                log_target = BOT_LOGGING
+                
+            test_msg = ZYRO.send_message(
+                chat_id=log_target,
+                text="⚙️ **fushiguro WaifuBot Startup Notification**:\nSuccessfully connected & verified write permissions in the logs channel!"
+            )
+            LOGGER("TEAMZYRO").info(f"Successfully verified BOT_LOGGING permissions. Test message sent (ID: {test_msg.id}).")
+        except Exception as e:
+            LOGGER("fushiguro-Log").error(
+                "\n"
+                "=======================================================================\n"
+                "❌ CRITICAL STARTUP ERROR:\n"
+                f"Bot cannot post/send messages to BOT_LOGGING chat ({BOT_LOGGING})!\n"
+                "======================================================================="
+            )
+            try:
+                ZYRO.stop()
+            except:
+                pass
+            sys.exit(1)
+    else:
+        LOGGER("TEAMZYRO").info("BOT_LOGGING is empty. Skipping log channel verification...")
 
     # स्टार्टअप लोगो और मैसेज (यह बॉट पोलिंग शुरू होने से पहले दिखेगा)
     LOGGER("TEAMZYRO").info(
