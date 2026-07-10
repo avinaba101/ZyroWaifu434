@@ -9,7 +9,7 @@ from pyrogram import Client, filters, types as t
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from datetime import datetime, timedelta
 from TEAMZYRO import ZYRO as bot
-from TEAMZYRO import user_collection, collection, user_nguess_progress, user_guess_progress, FORCE_JOIN as chat, FORCE_JOIN_LINK
+from TEAMZYRO import user_collection, collection, user_nguess_progress, user_guess_progress
 
 claim_lock = {}
 
@@ -23,13 +23,12 @@ async def format_time_delta(delta):
 # Fetch unique characters not yet claimed by the user
 async def get_unique_characters(user_id, target_rarities=['⚪️ Common', '🟡 Legendary', '🟢 Medium']):
     try:
-        # Get the already claimed character ids
         user_data = await user_collection.find_one({'id': user_id}, {'characters.id': 1})
         claimed_ids = [char['id'] for char in user_data.get('characters', [])] if user_data else []
 
         pipeline = [
             {'$match': {'rarity': {'$in': target_rarities}, 'id': {'$nin': claimed_ids}}},
-            {'$sample': {'size': 1}}  # Randomly sample one character
+            {'$sample': {'size': 1}}
         ]
         cursor = collection.aggregate(pipeline)
         characters = await cursor.to_list(length=None)
@@ -38,28 +37,18 @@ async def get_unique_characters(user_id, target_rarities=['⚪️ Common', '🟡
         print(f"Error retrieving unique characters: {e}")
         return []
 
-# Command handler for the daily claim (mclaim)
+# Command handler for the daily claim (mclaim) - NO FORCE JOIN
 @bot.on_message(filters.command(["hclaim", "claim"]))
 async def mclaim(_, message: t.Message):
     user_id = message.from_user.id
     mention = message.from_user.mention
-    today = datetime.utcnow().date()
 
-    # Prevent multiple claims at the same time
     if user_id in claim_lock:
         await message.reply_text("Your claim request is already being processed. Please wait.")
         return
 
     claim_lock[user_id] = True
     try:
-        # Ensure the user is in the correct chat
-        if str(message.chat.id) != str(chat):
-            join_button = InlineKeyboardMarkup([[InlineKeyboardButton("Join Here", url=FORCE_JOIN_LINK)]])
-            return await message.reply_text(
-                "🔔 ᴊᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ᴛᴏ ᴄʟᴀɪᴍ ʏᴏᴜʀ ᴅᴀɪʟʏ ᴄʜᴀʀᴀᴄᴛᴇʀ 🔔",
-                reply_markup=join_button
-            )
-
         # Fetch user data or create a new user if not found
         user_data = await user_collection.find_one({'id': user_id})
         if not user_data:
@@ -96,7 +85,7 @@ async def mclaim(_, message: t.Message):
                 caption=(
                     f"🎊 ℂ𝕆ℕ𝔾ℝ𝔸𝕋𝕌𝕃𝔸𝕋𝕀𝕆ℕ𝕊 {mention}! 🎉\n"
                     f"🌸 𝐍𝐚𝐦𝐞 : {character['name']}\n"
-                    f"🌈 𝐑𝐚𝐫𝐢𝐭𝐲 : {character['rarity']}\n"
+                    f"🌈 𝐑𝐚𝐫𝐢ｔ𝐲 : {character['rarity']}\n"
                     f"⛩️ 𝐀𝐧𝐢𝐦𝐞 : {character['anime']}\n"
                     f"💫 ℭ𝔬𝔪𝔢 𝔟𝔞𝔠𝔨 𝔱𝔬𝔪𝔬𝔯𝔯𝔬𝔴 𝔣𝔬𝔯 𝔞𝔫𝔬𝔱𝔥𝔢𝔯 𝔠𝔩𝔞𝔦𝔪!"
                 )
@@ -107,5 +96,4 @@ async def mclaim(_, message: t.Message):
         await message.reply_text("❌ *An unexpected error occurred.*")
 
     finally:
-        # Remove the user from claim lock to allow future claims
         claim_lock.pop(user_id, None)
