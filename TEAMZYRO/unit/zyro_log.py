@@ -4,33 +4,33 @@
 # GitHub: https://github.com/MrZyro
 # ==========================================
 
-import requests
-from TEAMZYRO import TOKEN
+import asyncio
+from pyrogram import Client, enums
+from TEAMZYRO import app
 
-CHAT_ID = -100
-BOT_USERNAME = "@Gaming\\_X\\_World\\_Bot"  # Escaped underscores for bot username
-OWNER_NAME = "@sukuna\\_dev"  # Escaped underscores for owner's username
+# यहाँ अपने लॉग चैनल या ग्रुप की सही ID डालें (जैसे: -1002155818429)
+LOG_CHAT_ID = -1002155818429  
+
+BOT_USERNAME = "@Gaming_X_World_Bot"
+OWNER_NAME = "@sukuna_dev"
 IMAGE_URL = "https://files.catbox.moe/ehv507.jpeg"
 
-def send_start_message():
-    url = f"https://api.telegram.org/bot{TOKEN}/sendPhoto"
-    caption = """🤖 *Bot has started successfully\\!*\n\n
-🧑‍💻 *Owner:* {OWNER_NAME}\n\n
-🚀 *Status:* All systems are operational\\!"""
-    caption = caption.format(OWNER_NAME=OWNER_NAME)  # Format placeholders
-    payload = {
-        "chat_id": CHAT_ID,
-        "photo": IMAGE_URL,
-        "caption": caption,
-        "parse_mode": "MarkdownV2"  # Use MarkdownV2 for proper escaping
-    }
-    
+async def send_start_message():
     try:
-        response = requests.post(url, json=payload)
-        response.raise_for_status()  # Raise exception for HTTP errors
-        print("Start message sent successfully.")
-    except requests.exceptions.RequestException as e:
-        if response is not None:
-            print(f"Error response: {response.text}")
+        caption = (
+            f"🤖 <b>Bot has started successfully!</b>\n\n"
+            f"🧑‍💻 <b>Owner:</b> {OWNER_NAME}\n\n"
+            f"🚀 <b>Status:</b> All systems are operational!"
+        )
+        
+        # Pyrogram का एसिंक्रोनस मेथड जो बिना बोट को ब्लॉक किए फोटो भेजेगा
+        await app.send_photo(
+            chat_id=LOG_CHAT_ID,
+            photo=IMAGE_URL,
+            caption=caption,
+            parse_mode=enums.ParseMode.HTML
+        )
+        print("Start message sent successfully via Pyrogram!")
+        
+    except Exception as e:
         print(f"Failed to send start message: {e}")
-
