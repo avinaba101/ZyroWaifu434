@@ -15,17 +15,17 @@ async def message_counter(update: Update, context: CallbackContext) -> None:
     user_id = update.effective_user.id
     current_time = time.time()
 
-    # Fetch or initialize group data
+    # Fetch or initialize group data - Changed default ctime from 80 to 5
     existing_group = await group_user_totals_collection.find_one({"group_id": chat_id})
     if not existing_group:
         await group_user_totals_collection.update_one(
             {"group_id": chat_id}, 
-            {"$set": {"group_id": chat_id, "ctime": 80}},  # Default ctime
+            {"$set": {"group_id": chat_id, "ctime": 5}},  # <--- यहाँ 5 मैसेजेस सेट कर दिए हैं
             upsert=True
         )
-        ctime = 80
+        ctime = 5
     else:
-        ctime = existing_group.get("ctime", 80)  # Use stored ctime or default to 80
+        ctime = existing_group.get("ctime", 5)  # <--- यहाँ भी डिफ़ॉल्ट 5 कर दिया है
 
     if chat_id not in locks:
         locks[chat_id] = asyncio.Lock()
