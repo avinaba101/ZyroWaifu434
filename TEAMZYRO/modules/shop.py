@@ -102,7 +102,7 @@ async def shop_menu(client, message):
         )
 
     await message.reply_photo(
-        photo="https://files.catbox.moe/ohi1vs.jpg",
+        photo="https://i.ibb.co/39sRQWVR/file-157.jpg",
         caption="🌟 **Choose a rarity to browse the Bazaar!**",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
