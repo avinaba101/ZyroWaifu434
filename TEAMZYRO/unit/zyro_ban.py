@@ -27,3 +27,4 @@ async def get_remaining_cooldown(user_id: int) -> int:
         else:
             user_cooldowns.pop(user_id, None)
     return 0
+    
