@@ -17,79 +17,90 @@ from TEAMZYRO import (app, group_user_totals_collection, locks,
 # डेटाबेस लोड कम करने के लिए ग्रुप लिमिट का छोटा कैश
 group_ctime_cache = TTLCache(maxsize=1000, ttl=60)
 
-# 💡 स्पॉन लिमिट को बढ़ाकर बिल्कुल परफेक्ट 50 मैसेज कर दिया गया है
+# 💡 स्पॉन लिमिट को बिल्कुल परफेक्ट 50 चैट (मैसेज) पर सेट कर दिया गया है
 DEFAULT_SPAWN_LIMIT = 50 
 
-# 🛠️ फ़िक्स: यहाँ से group=1 हटा दिया गया है ताकि बाकी कमांड्स (start, guess) ब्लॉक न हों
-@app.on_message(filters.group & filters.text)
+# 🛠️ SUPER FIX: group=-100 पर सेट किया है ताकि यह बाकी किसी भी गेम या बटन को ब्लॉक न करे
+@app.on_message(filters.group & filters.text, group=-100)
 async def message_counter(client: Client, message: Message):
-    
-    # अगर कोई भी मैसेज / से शुरू होता है, तो उसे यहीं छोड़ दो ताकि start और guess कमांड्स आराम से चलें
-    if message.text and message.text.strip().startswith("/"):
-        return
+    try:
+        # 🚀 अगर कोई कमांड या बटन दबाया गया है (जो / से शुरू हो), तो बिना गिने आगे भेज दो 
+        # ताकि ग्रुप में गेम और सारे बटन तुरंत रिप्लाई देने लगें!
+        if message.text and message.text.strip().startswith("/"):
+            message.continue_propagation()
+            return
 
-    if not message.from_user:
-        return
+        if not message.from_user:
+            message.continue_propagation()
+            return
 
-    chat_id = message.chat.id
-    chat_id_str = str(chat_id)
-    user_id = message.from_user.id
-    current_time = time.time()
+        chat_id = message.chat.id
+        chat_id_str = str(chat_id)
+        user_id = message.from_user.id
+        current_time = time.time()
 
-    # 1. ग्रुप की स्पॉन लिमिट (ctime) निकालना
-    if chat_id in group_ctime_cache:
-        ctime = group_ctime_cache[chat_id]
-    else:
-        existing_group = await group_user_totals_collection.find_one({"group_id": chat_id_str})
-        if not existing_group:
-            await group_user_totals_collection.update_one(
-                {"group_id": chat_id_str}, 
-                {"$set": {"group_id": chat_id_str, "ctime": DEFAULT_SPAWN_LIMIT}}, 
-                upsert=True
-            )
-            ctime = DEFAULT_SPAWN_LIMIT
+        # 1. ग्रुप की स्पॉन लिमिट (ctime) निकालना
+        if chat_id in group_ctime_cache:
+            ctime = group_ctime_cache[chat_id]
         else:
-            ctime = existing_group.get("ctime", DEFAULT_SPAWN_LIMIT)
-        group_ctime_cache[chat_id] = ctime
-
-    # 2. लॉक मैकेनिज्म (Concurrency Safety)
-    if chat_id not in locks:
-        locks[chat_id] = asyncio.Lock()
-    lock = locks[chat_id]
-
-    async with lock:
-        # 3. एंटी-स्पैम और कूलडाउन चेक
-        if user_id in user_cooldowns:
-            if current_time < user_cooldowns[user_id]:
-                return
+            existing_group = await group_user_totals_collection.find_one({"group_id": chat_id_str})
+            if not existing_group:
+                await group_user_totals_collection.update_one(
+                    {"group_id": chat_id_str}, 
+                    {"$set": {"group_id": chat_id_str, "ctime": DEFAULT_SPAWN_LIMIT}}, 
+                    upsert=True
+                )
+                ctime = DEFAULT_SPAWN_LIMIT
             else:
-                user_cooldowns.pop(user_id, None)
+                ctime = existing_group.get("ctime", DEFAULT_SPAWN_LIMIT)
+            group_ctime_cache[chat_id] = ctime
 
-        if chat_id in last_user and last_user[chat_id]['user_id'] == user_id:
-            last_user[chat_id]['count'] += 1
-            if last_user[chat_id]['count'] >= 10:
-                if user_id not in warned_users or current_time - warned_users[user_id] >= 600:
-                    user_cooldowns[user_id] = current_time + 600
-                    warned_users[user_id] = current_time
-                    try:
-                        await message.reply_text(
-                            f"⚠️ Don't Spam {message.from_user.first_name}...\n"
-                            "Your Messages Will be ignored for 10 Minutes..."
-                        )
-                    except Exception:
-                        pass
-                return
-        else:
-            last_user[chat_id] = {'user_id': user_id, 'count': 1}
+        # 2. लॉक मैकेनिज्म (Concurrency Safety)
+        if chat_id not in locks:
+            locks[chat_id] = asyncio.Lock()
+        lock = locks[chat_id]
 
-        # 4. मैसेज काउंटिंग लॉजिक
-        normal_message_counts[chat_id] = normal_message_counts.get(chat_id, 0) + 1
+        async with lock:
+            # 3. एंटी-स्पैम और कूलडाउन चेक
+            if user_id in user_cooldowns:
+                if current_time < user_cooldowns[user_id]:
+                    message.continue_propagation()
+                    return
+                else:
+                    user_cooldowns.pop(user_id, None)
 
-        # 5. कैरेक्टर स्पॉन ट्रिगर (अब पूरे 50 मैसेज होने पर ही चलेगा)
-        if normal_message_counts[chat_id] >= ctime:
-            normal_message_counts[chat_id] = 0 # पहले काउंट रीसेट करें
-            try:
-                await send_image(client, message)
-            except Exception as e:
-                print(f"Spawn Error in Group {chat_id}: {e}")
-              
+            if chat_id in last_user and last_user[chat_id]['user_id'] == user_id:
+                last_user[chat_id]['count'] += 1
+                if last_user[chat_id]['count'] >= 10:
+                    if user_id not in warned_users or current_time - warned_users[user_id] >= 600:
+                        user_cooldowns[user_id] = current_time + 600
+                        warned_users[user_id] = current_time
+                        try:
+                            await message.reply_text(
+                                f"⚠️ Don't Spam {message.from_user.first_name}...\n"
+                                "Your Messages Will be ignored for 10 Minutes..."
+                            )
+                        except Exception:
+                            pass
+                    message.continue_propagation()
+                    return
+            else:
+                last_user[chat_id] = {'user_id': user_id, 'count': 1}
+
+            # 4. मैसेज काउंटिंग लॉजिक
+            normal_message_counts[chat_id] = normal_message_counts.get(chat_id, 0) + 1
+
+            # 5. कैरेक्टर स्पॉन ट्रिगर (अब पूरे 50 चैट होने पर ही चलेगा)
+            if normal_message_counts[chat_id] >= ctime:
+                normal_message_counts[chat_id] = 0 # पहले काउंट रीसेट करें
+                try:
+                    await send_image(client, message)
+                except Exception as e:
+                    print(f"Spawn Error in Group {chat_id}: {e}")
+
+    except Exception as main_err:
+        print(f"Handler Error: {main_err}")
+    
+    # 🌟 सबसे ज़रूरी लाइन: यह बोट के बाकी सभी फीचर्स और गेम्स को ग्रुप में काम करने की आज़ादी देती है
+    message.continue_propagation()
+  
