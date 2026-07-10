@@ -14,27 +14,7 @@ from html import escape
 import random
 from pyrogram import enums
 import asyncio
-import os  # For environment variables
-
-# Support channel ID or username (configurable via environment variable for Heroku)
-SUPPORT_CHANNEL = MUSJ_JOIN  # Default to your channel username
-
-async def check_support_channel(client: Client, user_id: int) -> bool:
-    if user_id == x:
-        return True
-        
-    try:
-        await client.get_chat_member(SUPPORT_CHANNEL, user_id)
-        return True
-    except UserNotParticipant:
-        return False
-    except ChatAdminRequired:
-        print(f"Bot needs admin privileges in {SUPPORT_CHANNEL} to check membership.")
-        return False
-    except Exception as e:
-        print(f"Error checking support channel membership: {e}")
-        return False
-
+import os
 
 async def fetch_user_characters(user_id):
     user = await user_collection.find_one({"id": user_id})
@@ -49,17 +29,7 @@ async def fetch_user_characters(user_id):
 async def harem_handler(client: Client, message: Message):
     user_id = message.from_user.id
 
-    # Check if the user is in the support channel
-    if not await check_support_channel(client, user_id):
-        keyboard = [[InlineKeyboardButton("Join Support Channel", url=f"https://t.me/{SUPPORT_CHANNEL.lstrip('@')}")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await message.reply_text(
-            f"Please join our support channel {SUPPORT_CHANNEL} to use this command!",
-            reply_markup=reply_markup
-        )
-        return
-
-    # Proceed with existing logic if user is in the channel
+    # Proceed directly without any channel checks
     page = 0
     user = await user_collection.find_one({"id": user_id})
     filter_rarity = user.get('filter_rarity', None) if user else None
@@ -74,16 +44,6 @@ async def harem_handler(client: Client, message: Message):
 
 async def display_harem(client, message, user_id, page, filter_rarity, is_initial=False, callback_query=None):
     try:
-        # Check support channel membership again for callback queries
-        if not is_initial and not await check_support_channel(client, user_id):
-            keyboard = [[InlineKeyboardButton("Join Support Channel", url=f"https://t.me/{SUPPORT_CHANNEL.lstrip('@')}")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await callback_query.message.edit_text(
-                f"Please join our support channel {SUPPORT_CHANNEL} to view your harem!",
-                reply_markup=reply_markup
-            )
-            return
-
         characters, error = await fetch_user_characters(user_id)
         if error:
             if is_initial:
@@ -237,16 +197,6 @@ async def remove_filter_callback(client: Client, callback_query: CallbackQuery):
             await callback_query.answer("It's not your Harem!", show_alert=True)
             return
 
-        # Check support channel membership
-        if not await check_support_channel(client, user_id):
-            keyboard = [[InlineKeyboardButton("Join Support Channel", url=f"https://t.me/{SUPPORT_CHANNEL.lstrip('@')}")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await callback_query.message.edit_text(
-                f"Please join our support channel {SUPPORT_CHANNEL} to use this feature!",
-                reply_markup=reply_markup
-            )
-            return
-
         # Reset the filter to "All" in the database
         await user_collection.update_one({"id": user_id}, {"$set": {"filter_rarity": None}}, upsert=True)
 
@@ -279,16 +229,6 @@ async def harem_callback(client: Client, callback_query: CallbackQuery):
 async def hmode_handler(client: Client, message: Message):
     user_id = message.from_user.id
 
-    # Check support channel membership
-    if not await check_support_channel(client, user_id):
-        keyboard = [[InlineKeyboardButton("Join Support Channel", url=f"https://t.me/{SUPPORT_CHANNEL.lstrip('@')}")]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await message.reply_text(
-            f"Please join our support channel {SUPPORT_CHANNEL} to use this command!",
-            reply_markup=reply_markup
-        )
-        return
-
     keyboard = []
     row = []
     for i, (rarity, emoji) in enumerate(rarity_map2.items(), 1):
@@ -312,16 +252,6 @@ async def set_rarity_callback(client: Client, callback_query: CallbackQuery):
 
         if callback_query.from_user.id != user_id:
             await callback_query.answer("It's not your Harem!", show_alert=True)
-            return
-
-        # Check support channel membership
-        if not await check_support_channel(client, user_id):
-            keyboard = [[InlineKeyboardButton("Join Support Channel", url=f"https://t.me/{SUPPORT_CHANNEL.lstrip('@')}")]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await callback_query.message.edit_text(
-                f"Please join our support channel {SUPPORT_CHANNEL} to use this feature!",
-                reply_markup=reply_markup
-            )
             return
 
         # Update the user's filter_rarity in the database
