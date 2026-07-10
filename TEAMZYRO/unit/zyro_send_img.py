@@ -4,62 +4,66 @@
 # GitHub: https://github.com/MrZyro
 # ==========================================
 
-from TEAMZYRO import *
+import time
 import random
 import asyncio
-from telegram import Update
-from telegram.ext import CallbackContext
+from pyrogram import Client, filters, enums
+from pyrogram.types import Message
+
+# TEAMZYRO से आपके जरूरी कलेक्टर्स और डेटाबेस इम्पोर्ट हो रहे हैं
+from TEAMZYRO import app, collection, last_characters, first_correct_guesses
 
 log = "-1002155818429"
 
-async def delete_message(chat_id, message_id, context):
+async def delete_message(client: Client, chat_id: int, message_id: int):
     await asyncio.sleep(300)  # 5 minutes (300 seconds)
     try:
-        await context.bot.delete_message(chat_id, message_id)
+        await client.delete_messages(chat_id, message_id)
     except Exception as e:
         print(f"Error deleting message: {e}")
 
 RARITY_WEIGHTS = {
-    "⚪️ Common": (40, True),             # Most frequent
-    "🟣 Rare": (20, True),               # Less frequent than Common
-    "🟡 Legendary": (12, True),          # Rare but obtainable
-    "🟢 Medium": (10, True),             # Less common than Rare
-    "💮 Special Edition": (8, True),     # Very rare
-    "🔮 Limited Edition": (6, True),     # Extremely rare
-    "💸 Premium Edition": (4, True),     # Ultra-rare
-    "🌤 Summer": (3, False),             # Seasonal rarity
-    "🎐 Celestial": (2.5, True),         # Cosmic themed rarity
-    "❄️ Winter": (2, False),             # Winter themed rarity
-    "💝 Valentine": (2, False),          # Valentine's rarity
-    "🎃 Halloween": (1.8, False),        # Halloween themed rarity
-    "🎄 Christmas Special": (1.5, False),# Christmas themed rarity
-    "🪐 Omniversal": (1.2, True),        # Very rare cosmic rarity
-    "🎭 Cosplay Master 🎭": (1, True),   # Exclusive cosplay edition
-    "🧧 Events": (0.8, False),           # Limited-time event rarity
-    "🍑 Echhi": (0.6, True),             # Adult-themed rarity
-    "🎗️ AMV Edition": (0.5, False),     # AMV special rarity
-    "🌧 Rainy": (2.0, False),            # Rainy event rarity
+    "⚪️ Common": (40, True),
+    "🟣 Rare": (20, True),
+    "🟡 Legendary": (12, True),
+    "🟢 Medium": (10, True),
+    "💮 Special Edition": (8, True),
+    "🔮 Limited Edition": (6, True),
+    "💸 Premium Edition": (4, True),
+    "🌤 Summer": (3, False),
+    "🎐 Celestial": (2.5, True),
+    "❄️ Winter": (2, False),
+    "💝 Valentine": (2, False),
+    "🎃 Halloween": (1.8, False),
+    "🎄 Christmas Special": (1.5, False),
+    "🪐 Omniversal": (1.2, True),
+    "🎭 Cosplay Master 🎭": (1, True),
+    "🧧 Events": (0.8, False),
+    "🎗️ AMV Edition": (0.5, False),
+    "🌧 Rainy": (2.0, False),
 }
 
+async def send_image(client: Client, message: Message) -> None:
+    chat_id = message.chat.id
 
-async def send_image(update: Update, context: CallbackContext) -> None:
-    chat_id = update.effective_chat.id
+    # Allowed rarities की लिस्ट बनाना
+    allowed_rarities = [k for k, v in RARITY_WEIGHTS.items() if v[1]]
 
-    # Fetch all characters from MongoDB
-    all_characters = list(await collection.find({"rarity": {"$in": [k for k, v in RARITY_WEIGHTS.items() if v[1]]}}).to_list(length=None))
+    # Fetch characters from MongoDB matching rarities
+    all_characters = await collection.find({"rarity": {"$in": allowed_rarities}}).to_list(length=None)
 
     if not all_characters:
-        await context.bot.send_message(chat_id, "No characters found with allowed rarities in the database.")
+        await client.send_message(chat_id, "No characters found with allowed rarities in the database.")
         return
 
-    # Filter characters with valid rarity
+    # Filter out valid characters
     available_characters = [
         c for c in all_characters 
-        if 'id' in c and c.get('rarity') is not None and RARITY_WEIGHTS.get(c['rarity'], (0, False))[1]
+        if 'id' in c and c.get('rarity') is not None
     ]
 
     if not available_characters:
-        await context.bot.send_message(chat_id, "No available characters with the allowed rarities.")
+        await client.send_message(chat_id, "No available characters with the allowed rarities.")
         return
 
     # Weighted random selection
@@ -79,32 +83,32 @@ async def send_image(update: Update, context: CallbackContext) -> None:
     if not selected_character:
         selected_character = random.choice(available_characters)
 
-    # Clear first_correct_guesses if exists
-    last_characters[chat_id] = character
+    # बग फिक्स: चुनी हुई कैरेक्टर इन्फो को सही डिक्शनरी में सेव करना
+    last_characters[chat_id] = dict(selected_character)
     last_characters[chat_id]['timestamp'] = time.time()
     
     if chat_id in first_correct_guesses:
         del first_correct_guesses[chat_id]
 
-    # Check if the character has a video URL
-    if 'vid_url' in selected_character:
-        sent_message = await context.bot.send_video(
+    caption_text = f"""✨ A {selected_character['rarity']} Character Appears! ✨
+🔍 Use /guess to claim this mysterious character!
+💫 Hurry, before someone else snatches them!"""
+
+    # Check if the character has a video URL or Image
+    if 'vid_url' in selected_character and selected_character['vid_url']:
+        sent_message = await client.send_video(
             chat_id=chat_id,
             video=selected_character['vid_url'],
-            caption=f"""✨ A {selected_character['rarity']} Character Appears! ✨
-🔍 Use /guess to claim this mysterious character!
-💫 Hurry, before someone else snatches them!""",
-            parse_mode='Markdown'
+            caption=caption_text,
+            parse_mode=enums.ParseMode.MARKDOWN
         )
     else:
-        sent_message = await context.bot.send_photo(
+        sent_message = await client.send_photo(
             chat_id=chat_id,
             photo=selected_character['img_url'],
-            caption=f"""✨ A {selected_character['rarity']} Character Appears! ✨
-🔍 Use /guess to claim this mysterious character!
-💫 Hurry, before someone else snatches them!""",
-            parse_mode='Markdown'
+            caption=caption_text,
+            parse_mode=enums.ParseMode.MARKDOWN
         )
 
-    # Schedule message deletion after 5 minutes
-    asyncio.create_task(delete_message(chat_id, sent_message.message_id, context))
+    # Schedule message deletion after 5 minutes safely using Pyrogram client
+    asyncio.create_task(delete_message(client, chat_id, sent_message.id))
