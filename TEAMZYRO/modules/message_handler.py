@@ -20,7 +20,8 @@ group_ctime_cache = TTLCache(maxsize=1000, ttl=60)
 # 💡 स्पॉन लिमिट को बढ़ाकर बिल्कुल परफेक्ट 20 मैसेज कर दिया गया है
 DEFAULT_SPAWN_LIMIT = 20 
 
-@app.on_message(filters.group & ~filters.command)
+# 🛠️ यहाँ ब्रैकेट () लगा दिया गया है ताकि Pyrogram एरर न दे
+@app.on_message(filters.group & ~filters.command())
 async def message_counter(client: Client, message: Message):
     if not message.from_user:
         return
