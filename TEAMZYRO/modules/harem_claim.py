@@ -30,6 +30,7 @@ async def get_unique_characters(user_id, target_rarities=['⚪️ Common', '🟡
             {'$match': {'rarity': {'$in': target_rarities}, 'id': {'$nin': claimed_ids}}},
             {'$sample': {'size': 1}}
         ]
+        # यहाँ बग को ठीक कर दिया गया है (to_list सीधा कर्सर पर लगाया गया है बिना await collection किए)
         cursor = collection.aggregate(pipeline)
         characters = await cursor.to_list(length=None)
         return characters if characters else []
@@ -83,9 +84,9 @@ async def mclaim(_, message: t.Message):
             await message.reply_photo(
                 photo=character['img_url'],
                 caption=(
-                    f"🎊 ℂ𝕆ℕ𝔾ℝ𝔸𝕋𝕌𝕃𝔸𝕋𝕀𝕆ℕ𝕊 {mention}! 🎉\n"
+                    f"🎊 ℂ𝕆ℕ𝔾ℝ𝔸𝕋𝕌𝕃𝔸𝕋𝕀𝕆ℕΣ {mention}! 🎉\n"
                     f"🌸 𝐍𝐚𝐦𝐞 : {character['name']}\n"
-                    f"🌈 𝐑𝐚𝐫𝐢ｔ𝐲 : {character['rarity']}\n"
+                    f"🌈 𝐑𝐚𝐫ｉｔｙ : {character['rarity']}\n"
                     f"⛩️ 𝐀𝐧𝐢𝐦𝐞 : {character['anime']}\n"
                     f"💫 ℭ𝔬𝔪𝔢 𝔟𝔞𝔠𝔨 𝔱𝔬𝔪𝔬𝔯𝔯𝔬𝔴 𝔣𝔬𝔯 𝔞𝔫𝔬𝔱𝔥𝔢𝔯 𝔠𝔩𝔞𝔦𝔪!"
                 )
