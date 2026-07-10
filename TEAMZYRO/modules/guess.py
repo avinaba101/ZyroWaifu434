@@ -139,3 +139,4 @@ async def guess(client: Client, message: Message):
             incorrect_text,
             parse_mode=enums.ParseMode.HTML
         )
+        
