@@ -64,10 +64,10 @@ Characters are grouped by anime and show the count you own.
         "HELP": """
 Use inline queries to search for characters or view collections.
 
-- `@shorekeeper_RoBot query` → Search for characters.
-- `@shorekeeper_RoBot collection.<user_id>` → View a user's character collection.
-- `@shorekeeper_RoBot collection.<user_id> <name>` → Search within a user's collection.
-- `@shorekeeper_RoBot <query>.AMV` → Show characters with video clips.
+- `@Animecatcherrbot query` → Search for characters.
+- `@Animecatcherrbot collection.<user_id>` → View a user's character collection.
+- `@Animecatcherrbot collection.<user_id> <name>` → Search within a user's collection.
+- `@Animecatcherrbot <query>.AMV` → Show characters with video clips.
 
 Results include character name, anime, rarity, and image/video.
 """
