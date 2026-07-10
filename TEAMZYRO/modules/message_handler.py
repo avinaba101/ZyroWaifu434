@@ -17,14 +17,14 @@ from TEAMZYRO import (app, group_user_totals_collection, locks,
 # डेटाबेस लोड कम करने के लिए ग्रुप लिमिट का छोटा कैश
 group_ctime_cache = TTLCache(maxsize=1000, ttl=60)
 
-# 💡 स्पॉन लिमिट को बढ़ाकर बिल्कुल परफेक्ट 20 मैसेज कर दिया गया है
-DEFAULT_SPAWN_LIMIT = 20 
+# 💡 आपकी डिमांड पर स्पॉन लिमिट को बढ़ाकर बिल्कुल परफेक्ट 50 मैसेज कर दिया गया है
+DEFAULT_SPAWN_LIMIT = 50 
 
-# 🛠️ फ़िक्स: command() एरर को बाईपास करने के लिए टेक्स्ट और स्टार्ट-विथ लॉजिक लगाया गया है
-@app.on_message(filters.group & filters.text)
+# 🛠️ फ़िक्स: यहाँ filters.command() को पूरी तरह हटाकर बोट को कमांड्स के लिए आज़ाद कर दिया गया है
+@app.on_message(filters.group & filters.text, group=1)
 async def message_counter(client: Client, message: Message):
-    # अगर मैसेज कोई कमांड है (यानी / से शुरू होता है), तो गिनती मत करो
-    if message.text.startswith("/"):
+    # अगर कोई भी मैसेज / से शुरू होता है (जैसे /start, /guess, /fav), तो उसे काउंट मत करो और बोट को अपना काम करने दो
+    if message.text and message.text.strip().startswith("/"):
         return
 
     if not message.from_user:
@@ -57,7 +57,7 @@ async def message_counter(client: Client, message: Message):
     lock = locks[chat_id]
 
     async with lock:
-        # 3. एंटी-防पैम और कूलडाउन चेक
+        # 3. एंटी-स्पैम और कूलडाउन चेक
         if user_id in user_cooldowns:
             if current_time < user_cooldowns[user_id]:
                 return
@@ -84,7 +84,7 @@ async def message_counter(client: Client, message: Message):
         # 4. मैसेज काउंटिंग लॉजिक
         normal_message_counts[chat_id] = normal_message_counts.get(chat_id, 0) + 1
 
-        # 5. कैरेक्टर स्पॉन ट्रिगर (अब पूरे 20 मैसेज होने पर ही चलेगा)
+        # 5. कैरेक्टर स्पॉन ट्रिगर (अब पूरे 50 मैसेज होने पर ही चलेगा)
         if normal_message_counts[chat_id] >= ctime:
             normal_message_counts[chat_id] = 0 # पहले काउंट रीसेट करें
             try:
