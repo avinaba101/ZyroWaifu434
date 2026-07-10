@@ -17,10 +17,10 @@ from TEAMZYRO import (app, group_user_totals_collection, locks,
 # डेटाबेस लोड कम करने के लिए ग्रुप लिमिट का छोटा कैश
 group_ctime_cache = TTLCache(maxsize=1000, ttl=60)
 
-# 💡 स्पॉन लिमिट को बिल्कुल परफेक्ट 50 चैट (मैसेज) पर सेट कर दिया गया है
-DEFAULT_SPAWN_LIMIT = 50 
+# 💡 स्पॉन लिमिट को बढ़ाकर बिल्कुल परफेक्ट 110 चैट (मैसेज) पर सेट कर दिया गया है
+DEFAULT_SPAWN_LIMIT = 110 
 
-# 🛠️ SUPER FIX: group=-100 पर सेट किया है ताकि यह बाकी किसी भी गेम या बटन को ब्लॉक न करे
+# 🛠️ SUPER FIX: group=-100 पर सेट किया है ताकि यह बाकी किसी भी गेम या बटन को BLOCK न करे
 @app.on_message(filters.group & filters.text, group=-100)
 async def message_counter(client: Client, message: Message):
     try:
@@ -90,7 +90,7 @@ async def message_counter(client: Client, message: Message):
             # 4. मैसेज काउंटिंग लॉजिक
             normal_message_counts[chat_id] = normal_message_counts.get(chat_id, 0) + 1
 
-            # 5. कैरेक्टर स्पॉन ट्रिगर (अब पूरे 50 चैट होने पर ही चलेगा)
+            # 5. कैरेक्टर स्पॉन ट्रिगर (अब पूरे 110 चैट होने पर ही चलेगा)
             if normal_message_counts[chat_id] >= ctime:
                 normal_message_counts[chat_id] = 0 # पहले काउंट रीसेट करें
                 try:
