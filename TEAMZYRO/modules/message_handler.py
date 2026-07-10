@@ -20,9 +20,13 @@ group_ctime_cache = TTLCache(maxsize=1000, ttl=60)
 # 💡 स्पॉन लिमिट को बढ़ाकर बिल्कुल परफेक्ट 20 मैसेज कर दिया गया है
 DEFAULT_SPAWN_LIMIT = 20 
 
-# 🛠️ यहाँ ब्रैकेट () लगा दिया गया है ताकि Pyrogram एरर न दे
-@app.on_message(filters.group & ~filters.command())
+# 🛠️ फ़िक्स: command() एरर को बाईपास करने के लिए टेक्स्ट और स्टार्ट-विथ लॉजिक लगाया गया है
+@app.on_message(filters.group & filters.text)
 async def message_counter(client: Client, message: Message):
+    # अगर मैसेज कोई कमांड है (यानी / से शुरू होता है), तो गिनती मत करो
+    if message.text.startswith("/"):
+        return
+
     if not message.from_user:
         return
 
@@ -53,7 +57,7 @@ async def message_counter(client: Client, message: Message):
     lock = locks[chat_id]
 
     async with lock:
-        # 3. एंटी-स्पैम और कूलडाउन चेक
+        # 3. एंटी-防पैम और कूलडाउन चेक
         if user_id in user_cooldowns:
             if current_time < user_cooldowns[user_id]:
                 return
@@ -84,7 +88,6 @@ async def message_counter(client: Client, message: Message):
         if normal_message_counts[chat_id] >= ctime:
             normal_message_counts[chat_id] = 0 # पहले काउंट रीसेट करें
             try:
-                # हमारा फिक्स किया हुआ Pyrogram आधारित send_image रन होगा
                 await send_image(client, message)
             except Exception as e:
                 print(f"Spawn Error in Group {chat_id}: {e}")
