@@ -5,16 +5,14 @@
 # ==========================================
 
 from TEAMZYRO import *
-from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, CallbackQuery, Message
-from pyrogram.errors import ChatAdminRequired, UserNotParticipant, ChatWriteForbidden
-from itertools import groupby
-import math
+from TEAMZYRO import application
 from html import escape
-import random
-from pyrogram import enums
 import asyncio
-import os
+import math
+import random
+from itertools import groupby
+from pyrogram import Client, filters, enums
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto, InputMediaVideo, CallbackQuery, Message
 
 async def fetch_user_characters(user_id):
     user = await user_collection.find_one({"id": user_id})
@@ -29,7 +27,6 @@ async def fetch_user_characters(user_id):
 async def harem_handler(client: Client, message: Message):
     user_id = message.from_user.id
 
-    # Proceed directly without any channel checks
     page = 0
     user = await user_collection.find_one({"id": user_id})
     filter_rarity = user.get('filter_rarity', None) if user else None
@@ -52,14 +49,11 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                 await callback_query.message.edit_text(error)
             return
 
-        # Calculate total and AMV character counts
         total_characters = len(characters)
         amv_characters = len([c for c in characters if 'vid_url' in c])
 
-        # Sort characters by anime and ID
         characters = sorted(characters, key=lambda x: (x.get('anime', ''), x.get('id', '')))
 
-        # Filter by rarity if specified
         if filter_rarity:
             filtered_characters = [c for c in characters if c.get('rarity') == filter_rarity]
             if not filtered_characters:
@@ -80,30 +74,24 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                 return
             characters = filtered_characters
 
-        # Group characters by ID and count duplicates
         character_counts = {k: len(list(v)) for k, v in groupby(characters, key=lambda x: x['id'])}
         unique_characters = list({character['id']: character for character in characters}.values())
         total_pages = math.ceil(len(unique_characters) / 15)
 
-        # Ensure page is within valid range
         if page < 0 or page >= total_pages:
             page = 0
 
-        # Get user first name
         user_db = await user_collection.find_one({"id": user_id})
         user_first_name = user_db.get("first_name", "User") if user_db else "User"
 
-        # Build harem message
         harem_message = f"🌸 <b>{escape(user_first_name)}'s 𝖧𝖠𝖱𝖤𝖬</b> (𝖯𝖺𝗀𝖾 {page+1}/{total_pages})\n\n"
         if filter_rarity:
-            harem_message += f"<blockquote>🎯 <b>𝖥𝗂𝗅𝗍𝖾𝗋𝖾𝖽 𝖻𝗒:</b> {filter_rarity}</blockquote>\n"
+            harem_message += f"<blockquote>🎯 <b>𝖥𝗂𝗅𝗍𝖾𝗋𝖾𝖽 𝖻雅:</b> {filter_rarity}</blockquote>\n"
 
         harem_message += "<blockquote>"
-        # Get characters for the current page
         current_characters = unique_characters[page * 15:(page + 1) * 15]
         current_grouped_characters = {k: list(v) for k, v in groupby(current_characters, key=lambda x: x['anime'])}
 
-        # Add character details to the message
         for anime, chars in current_grouped_characters.items():
             total_anime_chars = await collection.count_documents({"anime": anime})
             harem_message += f'\n⛩️ <b>{anime}</b> ({len(chars)}/{total_anime_chars})\n'
@@ -113,7 +101,6 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                 harem_message += f'  ◈⌠{rarity_emoji}⌡ <code>{character["id"]}</code> {character["name"]} <b>(x{count})</b>\n'
         harem_message += "</blockquote>"
 
-        # Add inline buttons for collection and video-only collection with counts
         keyboard = [
             [
                 InlineKeyboardButton(f"Collection ({total_characters})", switch_inline_query_current_chat=f"collection.{user_id}"),
@@ -131,7 +118,6 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
 
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        # Select a random character for the image/video
         image_character = None
         user = await user_collection.find_one({"id": user_id})
         if user and 'favorites' in user and user['favorites']:
@@ -141,7 +127,6 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
         if not image_character:
             image_character = random.choice(characters) if characters else None
 
-        # Send or edit the harem message with media
         if is_initial:
             if image_character:
                 if 'vid_url' in image_character:
@@ -164,9 +149,10 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                 return await message.reply_text(harem_message, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
         else:
             if image_character:
+                # यहाँ बग को ठीक कर दिया गया है (InputMediaVideo इस्तेमाल किया गया है)
                 if 'vid_url' in image_character:
                     await callback_query.message.edit_media(
-                        media=InputMediaPhoto(image_character['vid_url'], caption=harem_message),
+                        media=InputMediaVideo(image_character['vid_url'], caption=harem_message),
                         reply_markup=reply_markup
                     )
                 elif 'img_url' in image_character:
@@ -197,13 +183,8 @@ async def remove_filter_callback(client: Client, callback_query: CallbackQuery):
             await callback_query.answer("It's not your Harem!", show_alert=True)
             return
 
-        # Reset the filter to "All" in the database
         await user_collection.update_one({"id": user_id}, {"$set": {"filter_rarity": None}}, upsert=True)
-
-        # Delete the current message
         await callback_query.message.delete()
-
-        # Notify the user that the filter has been removed
         await callback_query.answer("Filter removed. Showing all rarities.", show_alert=True)
     except Exception as e:
         print(f"Error in remove_filter callback: {e}")
@@ -254,10 +235,8 @@ async def set_rarity_callback(client: Client, callback_query: CallbackQuery):
             await callback_query.answer("It's not your Harem!", show_alert=True)
             return
 
-        # Update the user's filter_rarity in the database
         await user_collection.update_one({"id": user_id}, {"$set": {"filter_rarity": filter_rarity}}, upsert=True)
 
-        # Edit the message to show which rarity is set and remove the buttons
         if filter_rarity:
             await callback_query.message.edit_text(f"Rarity filter set to: **{filter_rarity}**")
         else:
@@ -266,3 +245,4 @@ async def set_rarity_callback(client: Client, callback_query: CallbackQuery):
         await callback_query.answer(f"Rarity filter set to {filter_rarity if filter_rarity else 'All'}", show_alert=True)
     except Exception as e:
         print(f"Error in set_rarity callback: {e}")
+        
