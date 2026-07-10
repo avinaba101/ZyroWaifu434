@@ -8,67 +8,68 @@ import re
 import time
 from html import escape
 from cachetools import TTLCache
-from pyrogram import Client, filters, enums
+from pyrogram import Client, enums
 from pyrogram.types import InlineQuery, InlineQueryResultPhoto, InlineQueryResultVideo
 
-from TEAMZYRO import app # Pyrogram क्लाइंट (बोट ऑब्जेक्ट)
-from TEAMZYRO.unit.zyro_inline import * # आपके पुराने फंक्शन्स (get_user_collection, search_characters आदि)
+from TEAMZYRO import app
+# आपके पुराने फ़ंक्शन्स को सुरक्षित इम्पोर्ट किया गया
+from TEAMZYRO.unit.zyro_inline import get_user_collection, search_characters, get_all_characters
 
-all_characters_cache = TTLCache(maxsize=10000, ttl=36000)  # Cache for all characters
-user_collection_cache = TTLCache(maxsize=10000, ttl=60)  # Cache for user collections
+# रैम को सुरक्षित रखने के लिए सही कैश लिमिट्स
+all_characters_cache = TTLCache(maxsize=2000, ttl=300)
+user_collection_cache = TTLCache(maxsize=2000, ttl=30)
 
 @app.on_inline_query()
 async def inlinequery(client: Client, inline_query: InlineQuery):
-    query = inline_query.query
+    query = inline_query.query.strip()
     offset = int(inline_query.offset) if inline_query.offset else 0
 
     user_data = None
     all_characters = []
 
-    # Check if query is for a user's collection
+    # कलेक्शन सर्च हैंडलर
     if query.startswith('collection.'):
         parts = query.split(' ')
         base_query = parts[0].split('.')
-        user_id = base_query[1]
+        user_id_str = base_query[1]
         search_terms = ' '.join(parts[1:])
         
-        if user_id.isdigit():
-            user_data = user_collection_cache.get(user_id) or await get_user_collection(user_id)
+        if user_id_str.isdigit():
+            user_id_int = int(user_id_str)
+            user_data = user_collection_cache.get(user_id_int) or await get_user_collection(user_id_int)
+            
             if user_data:
-                user_collection_cache[user_id] = user_data  # Cache the result
-                # Deduplicate by ID
+                user_collection_cache[user_id_int] = user_data  
+                # कैरेक्टर्स को आईडी के हिसाब से डुप्लिकेट होने से बचाना
                 all_characters = list({char['id']: char for char in user_data.get('characters', []) if 'id' in char}.values())
                 
                 if search_terms:
-                    # AMV फ़िल्टर शब्द को सर्च टर्म्स में से हटा रहे हैं ताकि सर्च सही हो
                     clean_search = search_terms.replace('.AMV', '').strip()
                     if clean_search:
-                        regex = re.compile(clean_search, re.IGNORECASE)
+                        regex = re.compile(re.escape(clean_search), re.IGNORECASE)
                         all_characters = [char for char in all_characters if regex.search(char.get('name', '')) or regex.search(char.get('anime', ''))]
     else:
-        # General character search
+        # नॉर्मल कैरेक्टर सर्च हैंडलर
         if query:
             clean_search = query.replace('.AMV', '').strip()
             if clean_search:
                 all_characters = await search_characters(clean_search)
         else:
             all_characters = all_characters_cache.get('all_characters') or await get_all_characters()
-            all_characters_cache['all_characters'] = all_characters  # Cache the result
+            all_characters_cache['all_characters'] = all_characters  
 
-    # Filter characters based on whether they have a video or image
+    # AMV (Video) या Photo फ़िल्टर लॉजिक
     if '.AMV' in query:
         all_characters = [char for char in all_characters if 'vid_url' in char]
     else:
         all_characters = [char for char in all_characters if 'img_url' in char]
 
-    # Pagination logic
+    # पैजिनेशन (Pagination) - 50 कैरेक्टर्स प्रति पेज
     characters = all_characters[offset:offset + 50]
     next_offset = str(offset + len(characters)) if len(characters) == 50 else ""
 
-    # Construct results for inline query
     results = []
     for character in characters:
-        # Generate caption safely
         if user_data:
             user_character_count = sum(1 for char in user_data.get('characters', []) if 'id' in char and char['id'] == character['id'])
             caption = (
@@ -87,13 +88,14 @@ async def inlinequery(client: Client, inline_query: InlineQuery):
                 f"🆔️ <b>{character['id']}</b>\n\n"
             )
 
-        unique_id = f"{character['id']}_{int(time.time())}_{offset}"
+        # प्रत्येक रिजल्ट के लिए एक मजबूत और यूनिक आईडी जेनरेट करना (ताकि इनलाइन क्रैश न हो)
+        unique_id = f"{character['id']}_{int(time.time())}_{offset}_{characters.index(character)}"
 
-        # If the character has a video URL, create a video result
         if 'vid_url' in character:
             thumbnail_url = character.get('thum_url') or character.get('img_url') or 'https://envs.sh/6Y3.jpg'
             results.append(
                 InlineQueryResultVideo(
+                    id=unique_id, # यूनिक आईडी को मैप किया गया (फिक्स)
                     video_url=character['vid_url'],
                     thumb_url=thumbnail_url,
                     title=character['name'],
@@ -104,9 +106,9 @@ async def inlinequery(client: Client, inline_query: InlineQuery):
                 )
             )
         elif 'img_url' in character:
-            # Add photo result to inline query results
             results.append(
                 InlineQueryResultPhoto(
+                    id=unique_id, # यूनिक आईडी को मैप किया गया (फिक्स)
                     photo_url=character['img_url'],
                     thumb_url=character['img_url'],
                     caption=caption,
@@ -114,5 +116,8 @@ async def inlinequery(client: Client, inline_query: InlineQuery):
                 )
             )
 
-    # Send the results with pagination
-    await inline_query.answer(results, next_offset=next_offset, cache_time=5)
+    try:
+        await inline_query.answer(results, next_offset=next_offset, cache_time=5)
+    except Exception as e:
+        print(f"Inline Query Answer Error: {e}")
+        
