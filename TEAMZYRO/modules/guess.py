@@ -92,7 +92,7 @@ async def guess(client: Client, message: Message):
                 'characters': [last_characters[chat_id]],
             })
 
-        # Update group count in top_global_groups_collection (new code)
+        # Update group count in top_global_groups_collection
         if message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
             group_name = message.chat.title or f"Group_{chat_id}"
             await top_global_groups_collection.update_one(
@@ -122,7 +122,7 @@ async def guess(client: Client, message: Message):
                 'balance': 40
             })
 
-        keyboard = [[InlineKeyboardButton("See Harem", switch_inline_query_current_chat=f"collection.{user_id}")]]
+        # Capture complete successfully message WITHOUT inline buttons
         await message.reply_text(
             f'🌟 <b><a href="tg://user?id={user_id}">{escape(message.from_user.first_name)}</a></b>, you\'ve captured a new character! 🎊\n\n'
             f'<blockquote>📛 <b>𝖭𝖠𝖬𝖤:</b> {last_characters[chat_id]["name"]}\n'
@@ -130,28 +130,17 @@ async def guess(client: Client, message: Message):
             f'✨ <b>𝖱𝖠𝖱𝖨𝖳𝖸:</b> {last_characters[chat_id]["rarity"]}\n\n'
             f'⏱️ <b>𝖳𝖨𝖬𝖤 𝖳𝖠𝖪𝖤𝖭:</b> {time_taken_str}\n'
             f'💰 <b>𝖤𝖠𝖱𝖭𝖤𝖣:</b> +40 coins 🎉\n'
-            f'💳 <b>𝖭𝖤𝖶 𝖡𝖠𝖫𝖠𝖭𝖢𝖤:</b> {new_balance} coins\n\n'
+            f'💳 <b>𝖭𝖤𝖶 𝖡𝖠𝖫𝖠𝖭𝖢𝖢𝖤:</b> {new_balance} coins\n\n'
             f'This Character has been added to Your Harem. Use /harem to see your harem.</blockquote>',
-            parse_mode=enums.ParseMode.HTML,
-            reply_markup=InlineKeyboardMarkup(keyboard)
+            parse_mode=enums.ParseMode.HTML
         )
     else:
-        message_id = last_characters[chat_id].get('message_id')
         incorrect_text = (
             "🕵️‍♂️ <b>𝖦𝖴𝖤𝖲𝖲 𝖥𝖠𝖨𝖫𝖤𝖣</b>\n\n"
             "<blockquote>❌ Not quite right, brave guesser! Try again and unveil the mystery character!</blockquote>"
         )
-        if message_id:
-            keyboard = [
-                [InlineKeyboardButton("See Media Again", url=f"https://t.me/c/{str(chat_id)[4:]}/{message_id}")],
-            ]
-            await message.reply_text(
-                incorrect_text,
-                reply_markup=InlineKeyboardMarkup(keyboard),
-                parse_mode=enums.ParseMode.HTML
-            )
-        else:
-            await message.reply_text(
-                incorrect_text,
-                parse_mode=enums.ParseMode.HTML
-            )
+        # All buttons removed from incorrect guess response
+        await message.reply_text(
+            incorrect_text,
+            parse_mode=enums.ParseMode.HTML
+        )
