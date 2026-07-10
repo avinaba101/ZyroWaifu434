@@ -5,31 +5,23 @@
 # ==========================================
 
 import random
-import requests
-from TEAMZYRO import *
+from pyrogram import Client
+from TEAMZYRO import app
 
 emojis = ["👍", "😘", "❤️", "🔥", "🥰", "🤩", "💘", "😏", "🤯", "⚡️", "🏆", "🤭", "🎉"]
 
-async def react_to_message(chat_id, message_id):
-    # Choose a random emoji from the list
-    random_emoji = random.choice(emojis)
-    
-    url = f'https://api.telegram.org/bot{TOKEN}/setMessageReaction'
-
-    # Parameters for the request
-    params = {
-        'chat_id': chat_id,
-        'message_id': message_id,
-        'reaction': [{
-            "type": "emoji",
-            "emoji": random_emoji
-        }]
-    }
-
-    response = requests.post(url, json=params)
-
-    if response.status_code == 200:
-        print("Reaction set successfully!")
-    else:
-        print(f"Failed to set reaction. Status code: {response.status_code}")
-
+async def react_to_message(chat_id: int, message_id: int):
+    try:
+        # लिस्ट से रैंडम इमोजी चुनना
+        random_emoji = random.choice(emojis)
+        
+        # Pyrogram का इन-बिल्ट एसिंक फ़ंक्शन जो बिना बोट को ब्लॉक किए रिएक्शन लगाता है
+        await app.send_reaction(
+            chat_id=chat_id,
+            message_id=message_id,
+            reaction=random_emoji
+        )
+        print("Reaction set successfully via Pyrogram!")
+        
+    except Exception as e:
+        print(f"Failed to set reaction: {e}")
