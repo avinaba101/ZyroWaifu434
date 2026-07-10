@@ -13,15 +13,15 @@ from inspect import getfullargspec
 from io import StringIO
 from time import time
 
-from pyrogram import filters
+from pyrogram import filters, enums
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message
 
-from pyrogram import enums
-
 from TEAMZYRO import ZYRO as app
+# मुख्य कॉन्फ़िगरेशन से OWNER_ID इम्पोर्ट कर रहे हैं
+from TEAMZYRO import OWNER_ID
 
-OWNER_ID = [7638720582]
-EVAL = [7638720582]
+# अगर OWNER_ID लिस्ट नहीं है, तो उसे लिस्ट में बदलें ताकि फ़िल्टर सही से काम करे
+EVAL_USERS = OWNER_ID if isinstance(OWNER_ID, list) else [OWNER_ID]
 
 async def aexec(code, client, message):
     exec(
@@ -37,19 +37,19 @@ async def edit_or_reply(msg: Message, **kwargs):
 
 @app.on_edited_message(
     filters.command("eval")
-    & filters.user(EVAL)
+    & filters.user(EVAL_USERS)
     & ~filters.forwarded
     & ~filters.via_bot
 )
 @app.on_message(
     filters.command("eval")
-    & filters.user(EVAL)
+    & filters.user(EVAL_USERS)
     & ~filters.forwarded
     & ~filters.via_bot
 )
 async def executor(client: app, message: Message):
     if len(message.command) < 2:
-        return await edit_or_reply(message, text="<b>ᴡʜᴀᴛ ʏᴏᴜ ᴡᴀɴɴᴀ ᴇxᴇᴄᴜᴛᴇ ʙᴀʙʏ ?</b>")
+        return await edit_or_reply(message, text="<b>What do you want to execute?</b>")
     try:
         cmd = message.text.split(" ", maxsplit=1)[1]
     except IndexError:
@@ -77,7 +77,7 @@ async def executor(client: app, message: Message):
         evaluation += stdout
     else:
         evaluation += "Success"
-    final_output = f"<b>⥤ ʀᴇsᴜʟᴛ :</b>\n<pre>{evaluation}</pre>"
+    final_output = f"<b>⥤ RESULT :</b>\n<pre>{evaluation}</pre>"
     if len(final_output) > 4096:
         filename = "output.txt"
         with open(filename, "w+", encoding="utf8") as out_file:
@@ -95,7 +95,7 @@ async def executor(client: app, message: Message):
         )
         await message.reply_document(
             document=filename,
-            caption=f"<b>⥤ ᴇᴠᴀʟ :</b>\n<code>{cmd[0:980]}</code>\n\n<b>⥤ ʀᴇsᴜʟᴛ :</b>\nAttached Document",
+            caption=f"<b>⥤ EVAL :</b>\n<code>{cmd[0:980]}</code>\n\n<b>⥤ RESULT :</b>\nAttached Document",
             quote=False,
             reply_markup=keyboard,
         )
@@ -132,7 +132,7 @@ async def forceclose_command(_, CallbackQuery):
     if CallbackQuery.from_user.id != int(user_id):
         try:
             return await CallbackQuery.answer(
-                "» ɪᴛ'ʟʟ ʙᴇ ʙᴇᴛᴛᴇʀ ɪғ ʏᴏᴜ sᴛᴀʏ ɪɴ ʏᴏᴜʀ ʟɪᴍɪᴛs ʙᴀʙʏ.", show_alert=True
+                "» This button is not for you.", show_alert=True
             )
         except:
             return
@@ -144,19 +144,19 @@ async def forceclose_command(_, CallbackQuery):
 
 @app.on_edited_message(
     filters.command("sh")
-    & filters.user(EVAL)
+    & filters.user(EVAL_USERS)
     & ~filters.forwarded
     & ~filters.via_bot
 )
 @app.on_message(
     filters.command("sh")
-    & filters.user(EVAL)
+    & filters.user(EVAL_USERS)
     & ~filters.forwarded
     & ~filters.via_bot
 )
 async def shellrunner(_, message: Message):
     if len(message.command) < 2:
-        return await edit_or_reply(message, text="<b>ᴇxᴀᴍᴩʟᴇ :</b>\n/sh git pull")
+        return await edit_or_reply(message, text="<b>Example :</b>\n/sh git pull")
     text = message.text.split(None, 1)[1]
     if "\n" in text:
         code = text.split("\n")
@@ -213,5 +213,3 @@ async def shellrunner(_, message: Message):
     else:
         await edit_or_reply(message, text="<b>OUTPUT :</b>\n<code>None</code>")
     await message.stop_propagation()
-
-
