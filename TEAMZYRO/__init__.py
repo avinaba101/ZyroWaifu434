@@ -79,6 +79,9 @@ user_nguess_progress = {}
 user_guess_progress = {}
 normal_message_counts = {}  
 
+# 🛠️ सुरक्षा के लिए 'x' वेरिएबल को यहाँ डिफ़ॉल्ट रूप से डिफाइन कर दिया गया है ताकि बोट कभी क्रैश न हो
+x = None 
+
 # -------------------------- POWER SETUP --------------------------------
 from TEAMZYRO.unit.zyro_ban import *
 from TEAMZYRO.unit.zyro_sudo import *
