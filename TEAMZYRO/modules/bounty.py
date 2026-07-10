@@ -246,13 +246,9 @@ async def mybounty_handler(client: Client, message: Message):
         f"{rarity_breakdown}"
     )
     
-    buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("💬 Support Group", url="https://t.me/oneforall_support")]
-    ])
-    
+    # All buttons and links completely removed from here
     await message.reply_photo(
         photo=poster_img,
         caption=caption,
-        reply_markup=buttons,
         quote=True
     )
