@@ -1,4 +1,4 @@
-13# ==========================================
+# ==========================================
 # Creator: fushiguro
 # Bot Name: Anime Catcher
 # Remade for Render & VPS Deployment
@@ -7,10 +7,12 @@
 import logging
 import sys
 import time
+import glob
+from os.path import basename, dirname, isfile
 
 StartTime = time.time()
 
-# logging सेटअप (Render और VPS दोनों के लिए अनुकूलित)
+# logging सेटअप
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     handlers=[logging.FileHandler("log.txt"), logging.StreamHandler()],
@@ -21,10 +23,10 @@ logging.getLogger("apscheduler").setLevel(logging.ERROR)
 logging.getLogger("pyrate_limiter").setLevel(logging.ERROR)
 LOGGER = logging.getLogger(__name__)
 
-# यदि पाइथन वर्शन 3.6 से पुराना है, तो बोट बंद करें
+# पाइथन वर्शन चेक
 if sys.version_info[0] < 3 or sys.version_info[1] < 6:
     LOGGER.error(
-        "You MUST have a python version of at least 3.6! Multiple features depend on this. Bot quitting."
+        "You MUST have a python version of at least 3.6! Bot quitting."
     )
     quit(1)
 
@@ -32,10 +34,7 @@ LOAD = []
 NO_LOAD = []
 
 def __list_all_modules():
-    import glob
-    from os.path import basename, dirname, isfile
-
-    # यह फ़ंक्शन modules फ़ोल्डर के अंदर की सभी .py फ़ाइलों को ऑटोमैटिक लोड करता है
+    # यह फ़ंक्शन इसी फ़ोल्डर के अंदर की सभी .py फ़ाइलों की लिस्ट बनाता है
     mod_paths = glob.glob(dirname(__file__) + "/*.py")
     all_modules = [
         basename(f)[:-3]
@@ -55,7 +54,6 @@ def __list_all_modules():
 
             all_modules = sorted(set(all_modules) - set(to_load))
             to_load = list(all_modules) + to_load
-
         else:
             to_load = all_modules
 
@@ -66,7 +64,6 @@ def __list_all_modules():
         return to_load
 
     return all_modules
-
 
 ALL_MODULES = __list_all_modules()
 LOGGER.info("Modules to load: %s", str(ALL_MODULES))
