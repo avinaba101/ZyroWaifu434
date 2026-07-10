@@ -4,13 +4,11 @@
 # GitHub: https://github.com/MrZyro
 # ==========================================
 
-# TEAMZYRO/commands/search_characters.py
 from TEAMZYRO import app, collection, rarity_map2 as rarity_map
 from pyrogram import Client, filters, enums
-from pyrogram.enums import ParseMode
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
 
-async def handle_search(client, message, query=None, page=1, is_callback=False):
+async def handle_search(client: Client, message: Message, query=None, page=1, is_callback=False):
     try:
         if not query:
             args = message.command
@@ -26,7 +24,10 @@ async def handle_search(client, message, query=None, page=1, is_callback=False):
         total_characters = await collection.count_documents({"name": {"$regex": query, "$options": "i"}})
 
         if total_characters == 0:
-            await message.reply_text(f"No characters found matching: {query}")
+            if is_callback:
+                await message.edit_text(f"No characters found matching: {query}")
+            else:
+                await message.reply_text(f"No characters found matching: {query}")
             return
 
         # Fetch the characters for the current page
@@ -35,11 +36,11 @@ async def handle_search(client, message, query=None, page=1, is_callback=False):
         # Create response message
         response = f"**Total Characters Found:** {total_characters}\n\n"
         for index, character in enumerate(characters, start=1 + skip):
-            rarity_emoji = rarity_map.get(character['rarity'], "❓")  # Default to ❓ if rarity is not found
+            rarity_emoji = rarity_map.get(character.get('rarity'), "❓")
             response += (
-                f"◈⌠{rarity_emoji}⌡ **{index}** {character['name']}\n"
-                f"Anime: {character['anime']}\n"
-                f"ID: {character['id']}\n\n"
+                f"◈⌠{rarity_emoji}⌡ **{index}** {character.get('name', 'Unknown')}\n"
+                f"Anime: {character.get('anime', 'Unknown')}\n"
+                f"ID: `{character.get('id', 'None')}`\n\n"
             )
 
         # Create pagination buttons
@@ -49,18 +50,19 @@ async def handle_search(client, message, query=None, page=1, is_callback=False):
         if skip + per_page < total_characters:
             buttons.append(InlineKeyboardButton("➡️ Next", callback_data=f"sips:{query}:{page + 1}"))
 
-        # Edit the message if it's a callback query, otherwise send a new one
+        reply_markup = InlineKeyboardMarkup([buttons]) if buttons else None
+
         if is_callback:
             await message.edit_text(
                 response,
-                reply_markup=InlineKeyboardMarkup([buttons]) if buttons else None,
-                parse_mode=ParseMode.MARKDOWN
+                reply_markup=reply_markup,
+                parse_mode=enums.ParseMode.MARKDOWN
             )
         else:
             await message.reply_text(
                 response,
-                reply_markup=InlineKeyboardMarkup([buttons]) if buttons else None,
-                parse_mode=ParseMode.MARKDOWN
+                reply_markup=reply_markup,
+                parse_mode=enums.ParseMode.MARKDOWN
             )
 
     except Exception as e:
@@ -71,19 +73,20 @@ async def handle_search(client, message, query=None, page=1, is_callback=False):
             await message.reply_text(error_message)
 
 @app.on_message(filters.command("sips"))
-async def search_characters(client, message):
+async def search_characters(client: Client, message: Message):
     await handle_search(client, message)
 
 @app.on_callback_query(filters.regex(r"^sips:(.+):(\d+)$"))
-async def handle_pagination(client, callback_query):
+async def handle_pagination(client: Client, callback_query: CallbackQuery):
     try:
         data = callback_query.data.split(":")
         query = data[1]
         page = int(data[2])
 
-        # Edit the current message with new results
+        # Edit the current message with new results safely
         await handle_search(client, callback_query.message, query=query, page=page, is_callback=True)
+        await callback_query.answer()
 
     except Exception as e:
         await callback_query.answer(f"Error: {str(e)}", show_alert=True)
-
+        
