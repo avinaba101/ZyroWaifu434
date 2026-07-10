@@ -17,13 +17,14 @@ from TEAMZYRO import (app, group_user_totals_collection, locks,
 # डेटाबेस लोड कम करने के लिए ग्रुप लिमिट का छोटा कैश
 group_ctime_cache = TTLCache(maxsize=1000, ttl=60)
 
-# 💡 आपकी डिमांड पर स्पॉन लिमिट को बढ़ाकर बिल्कुल परफेक्ट 50 मैसेज कर दिया गया है
+# 💡 स्पॉन लिमिट को बढ़ाकर बिल्कुल परफेक्ट 50 मैसेज कर दिया गया है
 DEFAULT_SPAWN_LIMIT = 50 
 
-# 🛠️ फ़िक्स: यहाँ filters.command() को पूरी तरह हटाकर बोट को कमांड्स के लिए आज़ाद कर दिया गया है
-@app.on_message(filters.group & filters.text, group=1)
+# 🛠️ फ़िक्स: यहाँ से group=1 हटा दिया गया है ताकि बाकी कमांड्स (start, guess) ब्लॉक न हों
+@app.on_message(filters.group & filters.text)
 async def message_counter(client: Client, message: Message):
-    # अगर कोई भी मैसेज / से शुरू होता है (जैसे /start, /guess, /fav), तो उसे काउंट मत करो और बोट को अपना काम करने दो
+    
+    # अगर कोई भी मैसेज / से शुरू होता है, तो उसे यहीं छोड़ दो ताकि start और guess कमांड्स आराम से चलें
     if message.text and message.text.strip().startswith("/"):
         return
 
