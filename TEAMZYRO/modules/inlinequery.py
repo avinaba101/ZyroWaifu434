@@ -39,7 +39,6 @@ async def inlinequery(client: Client, inline_query: InlineQuery):
             
             if user_data:
                 user_collection_cache[user_id_int] = user_data  
-                # कैरेक्टर्स को आईडी के हिसाब से डुप्लिकेट होने से बचाना
                 all_characters = list({char['id']: char for char in user_data.get('characters', []) if 'id' in char}.values())
                 
                 if search_terms:
@@ -87,7 +86,7 @@ async def inlinequery(client: Client, inline_query: InlineQuery):
                 f"🆔️ <b>{character['id']}</b>\n\n"
             )
 
-        # ✨ सुपर फिक्स: आईडी को स्टेबल बनाया गया (टाइमस्टैम्प हटाया गया) ताकि टेलीग्राम ग्रिड रेंडर कर सके
+        # आईडी को स्थिर रखा गया है ताकि टेलीग्राम ग्रिड को तुरंत लोड करे
         stable_id = f"{character['id']}_{offset}_{index}"
 
         if 'vid_url' in character:
@@ -97,29 +96,28 @@ async def inlinequery(client: Client, inline_query: InlineQuery):
                     id=stable_id,
                     video_url=character['vid_url'],
                     thumb_url=thumbnail_url,
-                    title=character['name'],
+                    title=" ", # खाली स्पेस ताकि कोई नाम न दिखे
                     mime_type="video/mp4",
-                    description=f"From: {character['anime']} | Rarity: {character['rarity']}",
                     caption=caption,
                     parse_mode=enums.ParseMode.HTML
                 )
             )
         elif 'img_url' in character:
-            # ✨ सुपर फिक्स: title, description और thumb_url को परफेक्ट मैप किया ताकि ग्रिड व्यू फोर्स हो सके
+            # 🔥 यहाँ जादू है: title और description को सिर्फ एक खाली स्पेस (" ") दिया गया है
+            # इससे टेलीग्राम ग्रिड में कोई भी टेक्स्ट या नाम नहीं दिखाएगा, सिर्फ साफ़ फोटो दिखेगी!
             results.append(
                 InlineQueryResultPhoto(
                     id=stable_id,
                     photo_url=character['img_url'],
                     thumb_url=character['img_url'],
-                    title=character['name'],
-                    description=f"From: {character['anime']} | Rarity: {character['rarity']}",
-                    caption=caption,
+                    title=" ",       
+                    description=" ", 
+                    caption=caption, # फोटो भेजने के बाद नाम और डिटेल्स चैट में दिखेंगी
                     parse_mode=enums.ParseMode.HTML
                 )
             )
 
     try:
-        # इनलाइन रिजल्ट्स को टेलीग्राम सर्वर पर भेजना
         await inline_query.answer(results, next_offset=next_offset, cache_time=5)
     except Exception as e:
         print(f"Inline Query Answer Error: {e}")
