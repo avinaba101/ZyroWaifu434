@@ -12,7 +12,6 @@ from pyrogram import Client, enums
 from pyrogram.types import InlineQuery, InlineQueryResultPhoto, InlineQueryResultVideo
 
 from TEAMZYRO import app
-# आपके पुराने फ़ंक्शन्स को सुरक्षित इम्पोर्ट किया गया
 from TEAMZYRO.unit.zyro_inline import get_user_collection, search_characters, get_all_characters
 
 # रैम को सुरक्षित रखने के लिए सही कैश लिमिट्स
@@ -69,7 +68,7 @@ async def inlinequery(client: Client, inline_query: InlineQuery):
     next_offset = str(offset + len(characters)) if len(characters) == 50 else ""
 
     results = []
-    for character in characters:
+    for index, character in enumerate(characters):
         if user_data:
             user_character_count = sum(1 for char in user_data.get('characters', []) if 'id' in char and char['id'] == character['id'])
             caption = (
@@ -88,14 +87,14 @@ async def inlinequery(client: Client, inline_query: InlineQuery):
                 f"🆔️ <b>{character['id']}</b>\n\n"
             )
 
-        # प्रत्येक रिजल्ट के लिए एक मजबूत और यूनिक आईडी जेनरेट करना (ताकि इनलाइन क्रैश न हो)
-        unique_id = f"{character['id']}_{int(time.time())}_{offset}_{characters.index(character)}"
+        # ✨ सुपर फिक्स: आईडी को स्टेबल बनाया गया (टाइमस्टैम्प हटाया गया) ताकि टेलीग्राम ग्रिड रेंडर कर सके
+        stable_id = f"{character['id']}_{offset}_{index}"
 
         if 'vid_url' in character:
             thumbnail_url = character.get('thum_url') or character.get('img_url') or 'https://envs.sh/6Y3.jpg'
             results.append(
                 InlineQueryResultVideo(
-                    id=unique_id, # यूनिक आईडी को मैप किया गया (फिक्स)
+                    id=stable_id,
                     video_url=character['vid_url'],
                     thumb_url=thumbnail_url,
                     title=character['name'],
@@ -106,17 +105,21 @@ async def inlinequery(client: Client, inline_query: InlineQuery):
                 )
             )
         elif 'img_url' in character:
+            # ✨ सुपर फिक्स: title, description और thumb_url को परफेक्ट मैप किया ताकि ग्रिड व्यू फोर्स हो सके
             results.append(
                 InlineQueryResultPhoto(
-                    id=unique_id, # यूनिक आईडी को मैप किया गया (फिक्स)
+                    id=stable_id,
                     photo_url=character['img_url'],
                     thumb_url=character['img_url'],
+                    title=character['name'],
+                    description=f"From: {character['anime']} | Rarity: {character['rarity']}",
                     caption=caption,
                     parse_mode=enums.ParseMode.HTML
                 )
             )
 
     try:
+        # इनलाइन रिजल्ट्स को टेलीग्राम सर्वर पर भेजना
         await inline_query.answer(results, next_offset=next_offset, cache_time=5)
     except Exception as e:
         print(f"Inline Query Answer Error: {e}")
