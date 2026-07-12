@@ -6,7 +6,7 @@
 
 import asyncio
 from pyrogram import Client, filters, types as t
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, enums
 from datetime import datetime, timedelta
 from TEAMZYRO import ZYRO as bot
 from TEAMZYRO import user_collection, collection, user_nguess_progress, user_guess_progress
@@ -30,7 +30,6 @@ async def get_unique_characters(user_id, target_rarities=['⚪️ Common', '🟡
             {'$match': {'rarity': {'$in': target_rarities}, 'id': {'$nin': claimed_ids}}},
             {'$sample': {'size': 1}}
         ]
-        # यहाँ बग को ठीक कर दिया गया है (to_list सीधा कर्सर पर लगाया गया है बिना await collection किए)
         cursor = collection.aggregate(pipeline)
         characters = await cursor.to_list(length=None)
         return characters if characters else []
@@ -66,7 +65,12 @@ async def mclaim(_, message: t.Message):
         if last_claimed_date and last_claimed_date.date() == datetime.utcnow().date():
             remaining_time = timedelta(days=1) - (datetime.utcnow() - last_claimed_date)
             formatted_time = await format_time_delta(remaining_time)
-            return await message.reply_text(f"⏳ *You've already claimed today! Next reward in:* `{formatted_time}`")
+            # 🔥 FIX 1: Already claimed warning text ko blockquote me dala
+            return await message.reply_text(
+                f"⏳ <b>𝖢𝖫𝖠𝖨𝖬 𝖫𝖨𝖬𝖨𝖳</b>\n\n"
+                f"<blockquote>❌ You've already claimed today!\nNext reward in: {formatted_time}</blockquote>",
+                parse_mode=enums.ParseMode.HTML
+            )
 
         # Fetch a unique character for the user
         unique_characters = await get_unique_characters(user_id)
@@ -81,15 +85,18 @@ async def mclaim(_, message: t.Message):
 
         # Send the character's image and info
         for character in unique_characters:
+            # 🔥 FIX 2: Success response ko perfect blockquote look diya aur parse_mode HTML kiya
+            caption = (
+                f"🎊 <b>𝖢𝖮𝖭𝖦𝖱𝖠𝖳𝖴𝖫𝖠𝖳𝖨𝖮𝖭𝖲 {mention}!</b> 🎉\n\n"
+                f"<blockquote>🌸 <b>𝖭𝖠𝖬𝖤 :</b> {character['name']}\n"
+                f"🌈 <b>𝖱𝖠𝖱𝖨𝖳𝖸 :</b> {character['rarity']}\n"
+                f"⛩️ <b>𝖠𝖭𝖨𝖬𝖤 :</b> {character['anime']}\n\n"
+                f"💫 Come back tomorrow for another claim!</blockquote>"
+            )
             await message.reply_photo(
                 photo=character['img_url'],
-                caption=(
-                    f"🎊 ℂ𝕆ℕ𝔾ℝ𝔸𝕋𝕌𝕃𝔸𝕋𝕀𝕆ℕΣ {mention}! 🎉\n"
-                    f"🌸 𝐍𝐚𝐦𝐞 : {character['name']}\n"
-                    f"🌈 𝐑𝐚𝐫ｉｔｙ : {character['rarity']}\n"
-                    f"⛩️ 𝐀𝐧𝐢𝐦𝐞 : {character['anime']}\n"
-                    f"💫 ℭ𝔬𝔪𝔢 𝔟𝔞𝔠𝔨 𝔱𝔬𝔪𝔬𝔯𝔯𝔬𝔴 𝔣𝔬𝔯 𝔞𝔫𝔬𝔱𝔥𝔢𝔯 𝔠𝔩𝔞𝔦𝔪!"
-                )
+                caption=caption,
+                parse_mode=enums.ParseMode.HTML
             )
 
     except Exception as e:
@@ -98,3 +105,4 @@ async def mclaim(_, message: t.Message):
 
     finally:
         claim_lock.pop(user_id, None)
+        
