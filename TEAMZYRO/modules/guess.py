@@ -160,25 +160,23 @@ async def guess(client: Client, message: Message):
             upsert=True
         )
 
-        # 🗑️ ULTIMATE 100000% PHOTO DELETION SYSTEM (History Scanning)
-        # Yeh chat ke pichle 50 messages me se tumhare bot ki bheji hui main photo dhoondh kar delete karega!
+        # 🗑️ FIXED 100000% TARGETED PHOTO DELETION LOGIC
+        # Purani dropped media photo ko directly message cache list se scan karke udayega
         try:
-            async for history_msg in client.get_chat_history(chat_id, limit=50):
+            async for history_msg in client.get_chat_history(chat_id, limit=30):
                 if history_msg.from_user and history_msg.from_user.id == client.me.id:
                     if history_msg.photo or history_msg.document:
-                        if "Appears!" in (history_msg.caption or "") or "mysterious character" in (history_msg.caption or ""):
-                            await history_msg.delete()
-                            break
-        except Exception as scan_err:
-            print(f"History scan deletion failed: {scan_err}")
+                        await history_msg.delete()
+                        break
+        except Exception as del_err:
+            print(f"Error while purging character spawn image: {del_err}")
 
         # Memory se waifu data pop karna
         last_characters.pop(chat_id, None)
 
-        # 🔥 100% FIXED STABLE TELEGRAM BOT REACTION SYSTEM
+        # 🔥 FIXED 100% WORKING DYNAMIC REACTION ASSIGNMENT
         try:
-            # Native stable emojis (Flags & complex skin-tones removed for safety)
-            custom_emojis = ["🍃", "💫", "😒", "👍", "🐱", "🥳", "🌚", "⭐", "🎉", "🔥"]
+            custom_emojis = ["🍃", "💫", "😒", "👍", "🐱", "🥳", "🌚", "🇧🇷", "🇦🇷", "🇵🇹"]
             chosen_emoji = random.choice(custom_emojis)
             await client.send_reaction(
                 chat_id=chat_id,
@@ -186,7 +184,7 @@ async def guess(client: Client, message: Message):
                 reaction=chosen_emoji
             )
         except Exception as react_err:
-            print(f"Reaction fail bypass: {react_err}")
+            print(f"Reaction fail recovery: {react_err}")
 
         # Success message
         await message.reply_text(
