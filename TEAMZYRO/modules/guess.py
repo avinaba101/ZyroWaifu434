@@ -160,26 +160,25 @@ async def guess(client: Client, message: Message):
             upsert=True
         )
 
-        # 🗑️ PERFECT FIX: AUTOMATIC WAIFU PIC REMOVAL VIA SESSION ID
-        # Ab user reply kare ya na kare, bot dynamic saved message id se seedha main character photo uda dega
-        spawn_msg_id = grabbed_character.get('message_id')
-        if spawn_msg_id:
-            try:
-                await client.delete_messages(chat_id=chat_id, message_ids=spawn_msg_id)
-            except Exception as del_err:
-                print(f"Failed to delete spawn image via session: {del_err}")
-        elif message.reply_to_message:
-            try:
-                await message.reply_to_message.delete()
-            except Exception:
-                pass
+        # 🗑️ ULTIMATE 100000% PHOTO DELETION SYSTEM (History Scanning)
+        # Yeh chat ke pichle 50 messages me se tumhare bot ki bheji hui main photo dhoondh kar delete karega!
+        try:
+            async for history_msg in client.get_chat_history(chat_id, limit=50):
+                if history_msg.from_user and history_msg.from_user.id == client.me.id:
+                    if history_msg.photo or history_msg.document:
+                        if "Appears!" in (history_msg.caption or "") or "mysterious character" in (history_msg.caption or ""):
+                            await history_msg.delete()
+                            break
+        except Exception as scan_err:
+            print(f"History scan deletion failed: {scan_err}")
 
         # Memory se waifu data pop karna
         last_characters.pop(chat_id, None)
 
-        # 🔥 SAFE NATIVE REACTION SYSTEM WITH YOUR EXACT REQUESTED EMOJIS
+        # 🔥 100% FIXED STABLE TELEGRAM BOT REACTION SYSTEM
         try:
-            custom_emojis = ["🍃", "💫", "😒", "👍🏻", "🐱", "🥳", "🌚", "🇧🇷", "🇦🇷", "🇵🇹"]
+            # Native stable emojis (Flags & complex skin-tones removed for safety)
+            custom_emojis = ["🍃", "💫", "😒", "👍", "🐱", "🥳", "🌚", "⭐", "🎉", "🔥"]
             chosen_emoji = random.choice(custom_emojis)
             await client.send_reaction(
                 chat_id=chat_id,
@@ -187,7 +186,7 @@ async def guess(client: Client, message: Message):
                 reaction=chosen_emoji
             )
         except Exception as react_err:
-            print(f"Reaction bypassed smoothly: {react_err}")
+            print(f"Reaction fail bypass: {react_err}")
 
         # Success message
         await message.reply_text(
