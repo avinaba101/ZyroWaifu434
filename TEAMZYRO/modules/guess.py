@@ -8,16 +8,10 @@ from TEAMZYRO import *
 from html import escape
 import asyncio
 import time
+import random  # Dynamic reaction emojis ke liye import kiya
 from pyrogram import Client, filters, enums
 from pyrogram.types import Message
 from datetime import datetime, timezone
-
-# 🔥 CRASH BYPASS: Agar module nahi milega toh bot crash nahi hoga aur smooth chalega
-try:
-    from TEAMZYRO.modules.react import react_to_message 
-except ModuleNotFoundError:
-    async def react_to_message(*args, **kwargs):
-        pass
 
 # ⏱️ COMMAND SPAM CONTROL: Per user cooldown tracking in memory
 GUESS_COOLDOWN_TIME = 8  
@@ -40,7 +34,6 @@ async def guess(client: Client, message: Message):
         if time_passed < GUESS_COOLDOWN_TIME:
             remaining = int(GUESS_COOLDOWN_TIME - time_passed)
             try:
-                # 🖼️ FIX: Cooldown warning text blockquote format kiya
                 await message.reply_text(
                     f"⚠️ <b>𝖢𝖮𝖮𝖫𝖣𝖮𝖶𝖭</b>\n\n"
                     f"<blockquote>Slow down! Wait {remaining}s before guessing again.</blockquote>",
@@ -71,7 +64,7 @@ async def guess(client: Client, message: Message):
 
     if chat_id in first_correct_guesses:
         await message.reply_text(
-            "❌ <b>𝖠𝖫𝖱𝖤𝖠𝖣𝖸 𝖢𝖫𝖠𝖨𝖬𝖤𝖣</b>\n\n"
+            "❌ <b>𝖠𝖫𝖱𝖤𝖣𝖸 𝖢𝖫𝖠𝖨𝖬𝖤𝖣</b>\n\n"
             "<blockquote>This character has already been guessed!</blockquote>",
             parse_mode=enums.ParseMode.HTML
         )
@@ -79,7 +72,7 @@ async def guess(client: Client, message: Message):
 
     if last_characters[chat_id].get('ranaway', False):
         await message.reply_text(
-            "❌ <b>𝖤𝖲𝖢𝖠𝖯𝖤𝖣</b>\n\n"
+            "❌ <b>𝖤𝖲𝖢𝖯𝖤𝖣</b>\n\n"
             "<blockquote>THE CHARACTER HAS ALREADY RUN AWAY!</blockquote>",
             parse_mode=enums.ParseMode.HTML
         )
@@ -89,7 +82,7 @@ async def guess(client: Client, message: Message):
     
     if not guess_word:
         await message.reply_text(
-            "⚠️ <b>𝖨𝖭𝖵𝖠𝖫𝖨𝖣 𝖦𝖴𝖤𝖲𝖲</b>\n\n"
+            "⚠️ <b>𝖨𝖭𝖵𝖠𝖫𝖨code 𝖦𝖴𝖤𝖲𝖲</b>\n\n"
             "<blockquote>Please provide a character name after the command.</blockquote>",
             parse_mode=enums.ParseMode.HTML
         )
@@ -168,13 +161,20 @@ async def guess(client: Client, message: Message):
             upsert=True
         )
 
-        # Memory se waifu data pop/remove
+        # Memory se waifu data pop/remove instantly
         last_characters.pop(chat_id, None)
 
+        # 🔥 NATIVE PYROGRAM REACTION SYSTEM WITH YOUR CUSTOM EMOJIS
         try:
-            await react_to_message(chat_id, message.id)
-        except Exception as e:
-            print(f"Reaction Error: {e}")
+            custom_emojis = ["🇵🇹", "🇦🇷", "🇧🇷", "🌚", "🥳", "🍃", "🐱", "👍🏻", "😒", "💫", "🎉", "🔥", "✨"]
+            chosen_emoji = random.choice(custom_emojis)
+            await client.send_reaction(
+                chat_id=chat_id,
+                message_id=message.id,
+                reaction=chosen_emoji
+            )
+        except Exception as react_err:
+            print(f"Native Reaction Error: {react_err}")
 
         # Success message with full Blockquote Gherav
         await message.reply_text(
@@ -184,7 +184,7 @@ async def guess(client: Client, message: Message):
             f'✨ <b>𝖱𝖠𝖱𝖨𝖳𝖸:</b> {grabbed_character["rarity"]}\n\n'
             f'⏱️ <b>𝖳𝖨𝖬𝖤 𝖳𝖠𝖪𝖤𝖭:</b> {time_taken_str}\n'
             f'💰 <b>𝖤𝖠𝖱𝖭𝖤𝖣:</b> +40 coins 🎉\n'
-            f'💳 <b>𝖭𝖤𝖶 𝖡𝖠𝖫𝖠𝖭𝖢𝖤:</b> {new_balance} coins\n\n'
+            f'💳 <b>𝖭𝖤𝖶 𝖡𝖠𝖫𝖠𝖢𝖤:</b> {new_balance} coins\n\n'
             f'This Character has been added to Your Harem. Use /harem to see your harem.</blockquote>',
             parse_mode=enums.ParseMode.HTML
         )
@@ -196,5 +196,5 @@ async def guess(client: Client, message: Message):
         await message.reply_text(
             incorrect_text,
             parse_mode=enums.ParseMode.HTML
-        )
+            )
         
