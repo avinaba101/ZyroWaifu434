@@ -5,8 +5,8 @@
 # ==========================================
 
 import asyncio
-from pyrogram import Client, filters, types as t
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, enums
+from pyrogram import Client, filters, enums
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from datetime import datetime, timedelta
 from TEAMZYRO import ZYRO as bot
 from TEAMZYRO import user_collection, collection, user_nguess_progress, user_guess_progress
@@ -39,7 +39,7 @@ async def get_unique_characters(user_id, target_rarities=['⚪️ Common', '🟡
 
 # Command handler for the daily claim (mclaim) - NO FORCE JOIN
 @bot.on_message(filters.command(["hclaim", "claim"]))
-async def mclaim(_, message: t.Message):
+async def mclaim(_, message: Message):
     user_id = message.from_user.id
     mention = message.from_user.mention
 
@@ -65,7 +65,6 @@ async def mclaim(_, message: t.Message):
         if last_claimed_date and last_claimed_date.date() == datetime.utcnow().date():
             remaining_time = timedelta(days=1) - (datetime.utcnow() - last_claimed_date)
             formatted_time = await format_time_delta(remaining_time)
-            # 🔥 FIX 1: Already claimed warning text ko blockquote me dala
             return await message.reply_text(
                 f"⏳ <b>𝖢𝖫𝖠𝖨𝖬 𝖫𝖨𝖬𝖨𝖳</b>\n\n"
                 f"<blockquote>❌ You've already claimed today!\nNext reward in: {formatted_time}</blockquote>",
@@ -85,7 +84,6 @@ async def mclaim(_, message: t.Message):
 
         # Send the character's image and info
         for character in unique_characters:
-            # 🔥 FIX 2: Success response ko perfect blockquote look diya aur parse_mode HTML kiya
             caption = (
                 f"🎊 <b>𝖢𝖮𝖭𝖦𝖱𝖠𝖳𝖴𝖫𝖠𝖳𝖨𝖮𝖭𝖲 {mention}!</b> 🎉\n\n"
                 f"<blockquote>🌸 <b>𝖭𝖠𝖬𝖤 :</b> {character['name']}\n"
