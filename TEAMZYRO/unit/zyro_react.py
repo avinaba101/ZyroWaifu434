@@ -8,7 +8,7 @@ import random
 from pyrogram import Client
 from TEAMZYRO import app
 
-emojis = ["👍", "😘", "❤️", "🔥", "🥰", "🤩", "💘", "😏", "🤯", "⚡️", "🏆", "🤭", "🎉"]
+emojis = ["🇦🇷", "😘", "🇧🇷", "🔥", "🥰", "🌚", "💘", "🇵🇹", "🤯", "⚡️", "🏆", "🤭", "🎉"]
 
 async def react_to_message(chat_id: int, message_id: int):
     try:
