@@ -25,26 +25,24 @@ async def check_character(client, message):
         await message.reply_text("Character not found.")
         return
 
-    # Power nikaalo using rarity
-
     # Create the 'Who Have It' button
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("Who Have It", callback_data=f"whohaveit_{character_id}")]
     ])
 
-    # Send character details
+    # 🔥 FIX 1: Character Info text ko proper blockquote gherav ke andar kiya
     text = (
-        f"🌟 **Character Info**\n"
-        f"🆔 ID: `{character_id}`\n"
-        f"📛 Name: {character['name']}\n"
-        f"📺 Anime: {character['anime']}\n"
-        f"💎 Rarity: {character['rarity']}\n"
+        f"🌟 <b>𝖢𝖧𝖠𝖱𝖠𝖢𝖳𝖤𝖱 𝖨𝖭𝖥𝖮</b>\n\n"
+        f"<blockquote>🆔 <b>𝖨𝖣:</b> <code>{character_id}</code>\n"
+        f"📛 <b>𝖭𝖠𝖬𝖤:</b> {character['name']}\n"
+        f"📺 <b>𝖠𝖭𝖨𝖬𝖤:</b> {character['anime']}\n"
+        f"💎 <b>𝖱𝖠𝖱𝖨𝖳𝖸:</b> {character['rarity']}</blockquote>"
     )
 
     if 'vid_url' in character:
-        await message.reply_video(character['vid_url'], caption=text, reply_markup=keyboard)
+        await message.reply_video(character['vid_url'], caption=text, reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
     else:
-        await message.reply_photo(character['img_url'], caption=text, reply_markup=keyboard)
+        await message.reply_photo(character['img_url'], caption=text, reply_markup=keyboard, parse_mode=enums.ParseMode.HTML)
 
 
 @app.on_callback_query(filters.regex("^whohaveit_"))
@@ -58,16 +56,18 @@ async def who_have_it(client, callback_query):
         await callback_query.answer("No one owns this character yet!", show_alert=True)
         return
 
-    # Generate top 10 owners list with count
-    owner_text = "**🏆 Top 10 Users Who Own This Character:**\n\n"
+    # 🔥 FIX 2: Owners list ke numbers aur names ko clean kiya aur use bhi blockquote box me daala
+    owner_text = "🏆 <b>𝖳𝖮𝖯 𝖮𝖶𝖭𝖤𝖱𝖲 𝖫𝖨𝖲𝖳</b>\n\n<blockquote>"
     for i, user in enumerate(users, 1):
-        user_name = user.get('first_name', 'Unknown')  # Use 'Unknown' if missing
+        user_name = user.get('first_name', 'Unknown')
         count = sum(1 for char in user.get("characters", []) if char["id"] == character_id)
-        owner_text += f"{i}. [{user_name}](tg://user?id={user['id']}) — x{count}\n"
+        owner_text += f"{i}. <a href='tg://user?id={user['id']}'>{user_name}</a> — x{count}\n"
+    owner_text += "</blockquote>"
 
     # Edit message to include the owner list and remove the button
     await callback_query.message.edit_caption(
         caption=f"{callback_query.message.caption}\n\n{owner_text}",
-        reply_markup=None
+        reply_markup=None,
+        parse_mode=enums.ParseMode.HTML
     )
-
+    
