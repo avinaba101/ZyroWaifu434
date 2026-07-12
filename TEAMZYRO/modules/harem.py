@@ -43,10 +43,12 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
     try:
         characters, error = await fetch_user_characters(user_id)
         if error:
+            # 🖼️ HTML Formatting for errors
+            formatted_error = f"⚠️ <b>𝖧𝖠𝖱𝖤𝖬 𝖤𝖱𝖱𝖪𝖱</b>\n\n<blockquote>{error}</blockquote>"
             if is_initial:
-                await message.reply_text(error)
+                await message.reply_text(formatted_error, parse_mode=enums.ParseMode.HTML)
             else:
-                await callback_query.message.edit_text(error)
+                await callback_query.message.edit_text(formatted_error, parse_mode=enums.ParseMode.HTML)
             return
 
         total_characters = len(characters)
@@ -61,16 +63,14 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                     [InlineKeyboardButton("Remove Filter", callback_data=f"remove_filter:{user_id}")]
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
+                no_char_txt = (
+                    f"⚠️ <b>𝖭𝖮 𝖢𝖧𝖠𝖱𝖠𝖢𝖳𝖤𝖱𝖲</b>\n\n"
+                    f"<blockquote>No characters found with rarity: <b>{filter_rarity}</b>.\nClick below to remove the filter.</blockquote>"
+                )
                 if is_initial:
-                    await message.reply_text(
-                        f"No characters found with rarity: **{filter_rarity}**. Click below to remove the filter.",
-                        reply_markup=reply_markup
-                    )
+                    await message.reply_text(no_char_txt, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
                 else:
-                    await callback_query.message.edit_text(
-                        f"No characters found with rarity: **{filter_rarity}**. Click below to remove the filter.",
-                        reply_markup=reply_markup
-                    )
+                    await callback_query.message.edit_text(no_char_txt, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
                 return
             characters = filtered_characters
 
@@ -86,7 +86,7 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
 
         harem_message = f"🌸 <b>{escape(user_first_name)}'s 𝖧𝖠𝖱𝖤𝖬</b> (𝖯𝖺𝗀𝖾 {page+1}/{total_pages})\n\n"
         if filter_rarity:
-            harem_message += f"<blockquote>🎯 <b>𝖥𝗂𝗅𝗍𝖾𝗋𝖾𝖽 𝖻雅:</b> {filter_rarity}</blockquote>\n"
+            harem_message += f"<blockquote>🎯 <b>𝖥𝗂𝗅𝗍𝖾𝗋𝖾𝖽 𝖻𝗒:</b> {filter_rarity}</blockquote>\n"
 
         harem_message += "<blockquote>"
         current_characters = unique_characters[page * 15:(page + 1) * 15]
@@ -149,7 +149,6 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
                 return await message.reply_text(harem_message, reply_markup=reply_markup, parse_mode=enums.ParseMode.HTML)
         else:
             if image_character:
-                # यहाँ बग को ठीक कर दिया गया है (InputMediaVideo इस्तेमाल किया गया है)
                 if 'vid_url' in image_character:
                     await callback_query.message.edit_media(
                         media=InputMediaVideo(image_character['vid_url'], caption=harem_message),
@@ -167,11 +166,11 @@ async def display_harem(client, message, user_id, page, filter_rarity, is_initia
 
     except Exception as e:
         print(f"Error in display_harem: {e}")
-        error_msg = "An error occurred. Please try again later."
+        error_msg = "⚠️ <b>𝖤𝖱𝖱𝖮𝖱</b>\n\n<blockquote>An error occurred. Please try again later.</blockquote>"
         if is_initial:
-            await message.reply_text(error_msg)
+            await message.reply_text(error_msg, parse_mode=enums.ParseMode.HTML)
         else:
-            await callback_query.message.edit_text(error_msg)
+            await callback_query.message.edit_text(error_msg, parse_mode=enums.ParseMode.HTML)
 
 @app.on_callback_query(filters.regex(r"^remove_filter"))
 async def remove_filter_callback(client: Client, callback_query: CallbackQuery):
@@ -222,7 +221,12 @@ async def hmode_handler(client: Client, message: Message):
     keyboard.append([InlineKeyboardButton("All", callback_data=f"set_rarity:{user_id}:None")])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await message.reply_text("Select a rarity to filter your harem:", reply_markup=reply_markup)
+    # 🖼️ Format Hmode text inside blockquote
+    await message.reply_text(
+        "⚙️ <b>𝖧𝖠𝖱𝖤𝖬 𝖥𝖨𝖫𝖳𝖤𝖱𝖲</b>\n\n<blockquote>Select a rarity to filter your harem:</blockquote>", 
+        reply_markup=reply_markup,
+        parse_mode=enums.ParseMode.HTML
+    )
 
 @app.on_callback_query(filters.regex(r"^set_rarity"))
 async def set_rarity_callback(client: Client, callback_query: CallbackQuery):
@@ -238,11 +242,17 @@ async def set_rarity_callback(client: Client, callback_query: CallbackQuery):
         await user_collection.update_one({"id": user_id}, {"$set": {"filter_rarity": filter_rarity}}, upsert=True)
 
         if filter_rarity:
-            await callback_query.message.edit_text(f"Rarity filter set to: **{filter_rarity}**")
+            await callback_query.message.edit_text(
+                f"🎯 <b>𝖥𝖨𝖫𝖳𝖤𝖱 𝖲𝖤𝖳</b>\n\n<blockquote>Rarity filter set to: <b>{filter_rarity}</b></blockquote>",
+                parse_mode=enums.ParseMode.HTML
+            )
         else:
-            await callback_query.message.edit_text("Rarity filter cleared. Showing all rarities.")
+            await callback_query.message.edit_text(
+                "🎯 <b>𝖥𝖨𝖫𝖳𝖤𝖱 𝖢𝖫𝖤𝖠𝖱𝖤𝖣</b>\n\n<blockquote>Rarity filter cleared. Showing all rarities.</blockquote>",
+                parse_mode=enums.ParseMode.HTML
+            )
 
         await callback_query.answer(f"Rarity filter set to {filter_rarity if filter_rarity else 'All'}", show_alert=True)
     except Exception as e:
         print(f"Error in set_rarity callback: {e}")
-        
+    
