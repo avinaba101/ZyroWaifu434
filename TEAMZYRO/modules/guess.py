@@ -12,8 +12,12 @@ from pyrogram import Client, filters, enums
 from pyrogram.types import Message
 from datetime import datetime, timezone
 
-# react.py se react_to_message function ko import kiya gaya hai
-from TEAMZYRO.modules.react import react_to_message 
+# 🔥 CRASH BYPASS: Agar module nahi milega toh bot crash nahi hoga aur smooth chalega
+try:
+    from TEAMZYRO.modules.react import react_to_message 
+except ModuleNotFoundError:
+    async def react_to_message(*args, **kwargs):
+        pass
 
 # ⏱️ COMMAND SPAM CONTROL: Per user cooldown tracking in memory
 GUESS_COOLDOWN_TIME = 8  
@@ -36,7 +40,12 @@ async def guess(client: Client, message: Message):
         if time_passed < GUESS_COOLDOWN_TIME:
             remaining = int(GUESS_COOLDOWN_TIME - time_passed)
             try:
-                await message.reply_text(f"⚠️ Slow down! Wait {remaining}s before guessing again.")
+                # 🖼️ FIX: Cooldown warning text blockquote format kiya
+                await message.reply_text(
+                    f"⚠️ <b>𝖢𝖮𝖮𝖫𝖣𝖮𝖶𝖭</b>\n\n"
+                    f"<blockquote>Slow down! Wait {remaining}s before guessing again.</blockquote>",
+                    parse_mode=enums.ParseMode.HTML
+                )
             except:
                 pass
             return
@@ -45,31 +54,53 @@ async def guess(client: Client, message: Message):
     if await check_cooldown(user_id):
         remaining_time = await get_remaining_cooldown(user_id)
         await message.reply_text(
-            f"⚠️ You are still in cooldown. Please wait {remaining_time} seconds before using any commands."
+            f"⚠️ <b>𝖢𝖮𝖮𝖫𝖣𝖮𝖶𝖭</b>\n\n"
+            f"<blockquote>You are still in cooldown. Please wait {remaining_time} seconds before using any commands.</blockquote>",
+            parse_mode=enums.ParseMode.HTML
         )
         return
 
-    # सेशन वैलिडिटी चेक (Auto-remove ke baad ye block trigger hoga agar koi dubara guess karega)
+    # Session validity check
     if chat_id not in last_characters or 'name' not in last_characters.get(chat_id, {}):
-        await message.reply_text("❌ Character Guess not available for this chat.")
+        await message.reply_text(
+            "❌ <b>𝖭𝖮𝖳 𝖠𝖵𝖠𝖨𝖫𝖠𝖡𝖫𝖤</b>\n\n"
+            "<blockquote>Character Guess not available for this chat.</blockquote>",
+            parse_mode=enums.ParseMode.HTML
+        )
         return
 
     if chat_id in first_correct_guesses:
-        await message.reply_text("❌ This character has already been guessed!")
+        await message.reply_text(
+            "❌ <b>𝖠𝖫𝖱𝖤𝖠𝖣𝖸 𝖢𝖫𝖠𝖨𝖬𝖤𝖣</b>\n\n"
+            "<blockquote>This character has already been guessed!</blockquote>",
+            parse_mode=enums.ParseMode.HTML
+        )
         return
 
     if last_characters[chat_id].get('ranaway', False):
-        await message.reply_text("❌ THE CHARACTER HAS ALREADY RUN AWAY!")
+        await message.reply_text(
+            "❌ <b>𝖤𝖲𝖢𝖠𝖯𝖤𝖣</b>\n\n"
+            "<blockquote>THE CHARACTER HAS ALREADY RUN AWAY!</blockquote>",
+            parse_mode=enums.ParseMode.HTML
+        )
         return 
 
     guess_word = ' '.join(message.command[1:]).lower().strip() if len(message.command) > 1 else ''
     
     if not guess_word:
-        await message.reply_text("Please provide a character name after the command.")
+        await message.reply_text(
+            "⚠️ <b>𝖨𝖭𝖵𝖠𝖫𝖨𝖣 𝖦𝖴𝖤𝖲𝖲</b>\n\n"
+            "<blockquote>Please provide a character name after the command.</blockquote>",
+            parse_mode=enums.ParseMode.HTML
+        )
         return
 
     if "()" in guess_word or "&" in guess_word:
-        await message.reply_text("Nahh You Can't use These Types of words in your guess..❌️")
+        await message.reply_text(
+            "❌ <b>𝖭𝖮𝖳 𝖠𝖫𝖫𝖮𝖶𝖤𝖣</b>\n\n"
+            "<blockquote>Nahh You Can't use These Types of words in your guess..</blockquote>",
+            parse_mode=enums.ParseMode.HTML
+        )
         return
 
     # Set timestamp immediately
@@ -99,7 +130,7 @@ async def guess(client: Client, message: Message):
 
         user_guess_progress[user_id]["count"] += 1
         
-        # Grabbed character data target variable me copy karna delete karne se pehle
+        # Grabbed character data copy karna delete karne se pehle
         grabbed_character = last_characters[chat_id]
 
         # DB Update logic
@@ -137,7 +168,7 @@ async def guess(client: Client, message: Message):
             upsert=True
         )
 
-        # 🔥 FEATURE 1 FIX: Sahi guess hote hi memory se waifu data automatic delete/remove
+        # Memory se waifu data pop/remove
         last_characters.pop(chat_id, None)
 
         try:
@@ -145,14 +176,14 @@ async def guess(client: Client, message: Message):
         except Exception as e:
             print(f"Reaction Error: {e}")
 
-        # Success message
+        # Success message with full Blockquote Gherav
         await message.reply_text(
             f'🌟 <b><a href="tg://user?id={user_id}">{escape(message.from_user.first_name)}</a></b>, you\'ve captured a new character! 🎊\n\n'
             f'<blockquote>📛 <b>𝖭𝖠𝖬𝖤:</b> {grabbed_character["name"]}\n'
             f'🌈 <b>𝖠𝖭𝖨𝖬𝖤:</b> {grabbed_character["anime"]}\n'
             f'✨ <b>𝖱𝖠𝖱𝖨𝖳𝖸:</b> {grabbed_character["rarity"]}\n\n'
             f'⏱️ <b>𝖳𝖨𝖬𝖤 𝖳𝖠𝖪𝖤𝖭:</b> {time_taken_str}\n'
-            f'💰 <b>𝖤𝖠𝖱𝖤𝖭𝖣:</b> +40 coins 🎉\n'
+            f'💰 <b>𝖤𝖠𝖱𝖭𝖤𝖣:</b> +40 coins 🎉\n'
             f'💳 <b>𝖭𝖤𝖶 𝖡𝖠𝖫𝖠𝖭𝖢𝖤:</b> {new_balance} coins\n\n'
             f'This Character has been added to Your Harem. Use /harem to see your harem.</blockquote>',
             parse_mode=enums.ParseMode.HTML
