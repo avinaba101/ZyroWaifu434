@@ -8,12 +8,12 @@ from TEAMZYRO import *
 from html import escape
 import asyncio
 import time
-import random  # Dynamic reaction emojis ke liye import kiya
+import random  
 from pyrogram import Client, filters, enums
 from pyrogram.types import Message
 from datetime import datetime, timezone
 
-# ⏱️ COMMAND SPAM CONTROL: Per user cooldown tracking in memory
+# ⏱️ COMMAND SPAM CONTROL
 GUESS_COOLDOWN_TIME = 8  
 guess_cooldowns = {}
 
@@ -72,7 +72,7 @@ async def guess(client: Client, message: Message):
 
     if last_characters[chat_id].get('ranaway', False):
         await message.reply_text(
-            "❌ <b>𝖤𝖲𝖢𝖯𝖤𝖣</b>\n\n"
+            "❌ <b>𝖤𝖲𝖢𝖠𝖯𝖤𝖣</b>\n\n"
             "<blockquote>THE CHARACTER HAS ALREADY RUN AWAY!</blockquote>",
             parse_mode=enums.ParseMode.HTML
         )
@@ -82,7 +82,7 @@ async def guess(client: Client, message: Message):
     
     if not guess_word:
         await message.reply_text(
-            "⚠️ <b>𝖨𝖭𝖵𝖠𝖫𝖨code 𝖦𝖴𝖤𝖲𝖲</b>\n\n"
+            "⚠️ <b>𝖨𝖭𝖵𝖠𝖫𝖨𝖣 𝖦𝖴𝖤𝖲𝖲</b>\n\n"
             "<blockquote>Please provide a character name after the command.</blockquote>",
             parse_mode=enums.ParseMode.HTML
         )
@@ -123,7 +123,6 @@ async def guess(client: Client, message: Message):
 
         user_guess_progress[user_id]["count"] += 1
         
-        # Grabbed character data copy karna delete karne se pehle
         grabbed_character = last_characters[chat_id]
 
         # DB Update logic
@@ -161,12 +160,26 @@ async def guess(client: Client, message: Message):
             upsert=True
         )
 
-        # Memory se waifu data pop/remove instantly
+        # 🗑️ PERFECT FIX: AUTOMATIC WAIFU PIC REMOVAL VIA SESSION ID
+        # Ab user reply kare ya na kare, bot dynamic saved message id se seedha main character photo uda dega
+        spawn_msg_id = grabbed_character.get('message_id')
+        if spawn_msg_id:
+            try:
+                await client.delete_messages(chat_id=chat_id, message_ids=spawn_msg_id)
+            except Exception as del_err:
+                print(f"Failed to delete spawn image via session: {del_err}")
+        elif message.reply_to_message:
+            try:
+                await message.reply_to_message.delete()
+            except Exception:
+                pass
+
+        # Memory se waifu data pop karna
         last_characters.pop(chat_id, None)
 
-        # 🔥 NATIVE PYROGRAM REACTION SYSTEM WITH YOUR CUSTOM EMOJIS
+        # 🔥 SAFE NATIVE REACTION SYSTEM WITH YOUR EXACT REQUESTED EMOJIS
         try:
-            custom_emojis = ["🇵🇹", "🇦🇷", "🇧🇷", "🌚", "🥳", "🍃", "🐱", "👍🏻", "😒", "💫", "🎉", "🔥", "✨"]
+            custom_emojis = ["🍃", "💫", "😒", "👍🏻", "🐱", "🥳", "🌚", "🇧🇷", "🇦🇷", "🇵🇹"]
             chosen_emoji = random.choice(custom_emojis)
             await client.send_reaction(
                 chat_id=chat_id,
@@ -174,9 +187,9 @@ async def guess(client: Client, message: Message):
                 reaction=chosen_emoji
             )
         except Exception as react_err:
-            print(f"Native Reaction Error: {react_err}")
+            print(f"Reaction bypassed smoothly: {react_err}")
 
-        # Success message with full Blockquote Gherav
+        # Success message
         await message.reply_text(
             f'🌟 <b><a href="tg://user?id={user_id}">{escape(message.from_user.first_name)}</a></b>, you\'ve captured a new character! 🎊\n\n'
             f'<blockquote>📛 <b>𝖭𝖠𝖬𝖤:</b> {grabbed_character["name"]}\n'
@@ -196,5 +209,5 @@ async def guess(client: Client, message: Message):
         await message.reply_text(
             incorrect_text,
             parse_mode=enums.ParseMode.HTML
-            )
+        )
         
