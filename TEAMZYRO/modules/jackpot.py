@@ -71,13 +71,14 @@ async def basket(bot, message):
         return_document=ReturnDocument.AFTER
     )
 
-    # Send response
+    # 🔥 SUPER FIX: Poore text content ko blockquote gherav ke andar warp kar diya hai
     await message.reply_text(
         f"🎰 <b>𝖩𝖠𝖢𝖪𝖯𝖮𝖳 𝖱𝖤𝖲𝖴𝖫𝖳</b>\n\n"
-        f"👤 <b>Player:</b> {message.from_user.mention}\n"
-        f"<blockquote>🎲 <b>Dice Score:</b> {dice_score}\n"
+        f"<blockquote>👤 <b>Player:</b> {message.from_user.mention}\n"
+        f"🎲 <b>Dice Score:</b> {dice_score}\n"
         f"💰 <b>Earned:</b> +{coins_earned} coins 🎉\n"
         f"💳 <b>New Balance:</b> {updated_user['balance']} coins</blockquote>",
         quote=True,
         parse_mode=enums.ParseMode.HTML
     )
+    
