@@ -12,6 +12,9 @@ from pyrogram import Client, filters, enums
 from pyrogram.types import Message
 from datetime import datetime, timezone
 
+# 🔥 SUPER FIX: react.py se react_to_message function ko import kiya gaya hai
+from TEAMZYRO.modules.react import react_to_message 
+
 @app.on_message(filters.command(["guess", "protecc", "collect", "grab", "hunt"]) & filters.group)
 async def guess(client: Client, message: Message):
     chat_id = message.chat.id
@@ -113,10 +116,11 @@ async def guess(client: Client, message: Message):
             upsert=True
         )
 
+        # 🔥 Fix: Ab reaction functions sahi path se call hoga aur full work karega
         try:
             await react_to_message(chat_id, message.id)
-        except:
-            pass
+        except Exception as e:
+            print(f"Reaction Error: {e}")
 
         # बधाई संदेश
         await message.reply_text(
