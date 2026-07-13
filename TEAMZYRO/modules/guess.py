@@ -17,12 +17,12 @@ from datetime import datetime, timezone
 GUESS_COOLDOWN_TIME = 8  
 guess_cooldowns = {}
 
-# 🎭 RANDOM STICKERS LIST
+# 🎭 RANDOM STICKERS LIST (Working Telegram Standard Stickers)
 STICKERS = [
-    "CAACAgIAAxkBAAEFzlljF2...", 
-    "CAACAgIAAxkBAAEFzltjF2...", 
-    "CAACAgIAAxkBAAEFzl1jF2...", 
-    "CAACAgIAAxkBAAEFzl9jF2..."
+    "CAACAgIAAxkBAAEl4nFmR...", 
+    "CAACAgIAAxkBAAEl4nNmR...", 
+    "CAACAgIAAxkBAAEl4nVmR...", 
+    "CAACAgIAAxkBAAEl4ndmR..."
 ]
 
 @app.on_message(filters.command(["guess", "protecc", "collect", "grab", "hunt"]) & filters.group)
@@ -36,7 +36,7 @@ async def guess(client: Client, message: Message):
     current_time = time.time()
     today = datetime.now(timezone.utc).date()
 
-    # COOLDOWN CHECK
+    # 1. COOLDOWN SECURITY CHECK
     if user_id in guess_cooldowns:
         time_passed = current_time - guess_cooldowns[user_id]
         if time_passed < GUESS_COOLDOWN_TIME:
@@ -47,6 +47,13 @@ async def guess(client: Client, message: Message):
                 pass
             return
 
+    # Global cooling verification
+    if await check_cooldown(user_id):
+        remaining_time = await get_remaining_cooldown(user_id)
+        await message.reply_text(f"⚠️ Cooldown active. Wait {remaining_time}s.")
+        return
+
+    # Session validity check
     if chat_id not in last_characters or 'name' not in last_characters.get(chat_id, {}):
         await message.reply_text("❌ Character Guess not available for this chat.")
         return
@@ -64,9 +71,11 @@ async def guess(client: Client, message: Message):
     guess_cooldowns[user_id] = current_time
     name_parts = last_characters[chat_id]['name'].lower().split()
     
+    # 2. MATCHING LOGIC ENGINE
     if sorted(name_parts) == sorted(guess_word.split()) or any(part == guess_word for part in name_parts):
         first_correct_guesses[chat_id] = user_id
         
+        # Expire session task ko cancel karna
         for task in asyncio.all_tasks():
             if task.get_name() == f"expire_session_{chat_id}":
                 task.cancel()
@@ -74,7 +83,7 @@ async def guess(client: Client, message: Message):
 
         grabbed_character = last_characters[chat_id]
 
-        # 💾 DATABASE ME DATA ADD KARNA (100% SAFE - KUCH DELETE NAHI HOGA YAHAN SE)
+        # 3. 💾 DATABASE COMMIT (100% SAFE - DATA DELETE NAHI HOGA)
         user_data = await user_collection.find_one({'id': user_id})
         new_balance = (user_data.get('balance', 0) if user_data else 0) + 40
         
@@ -86,7 +95,7 @@ async def guess(client: Client, message: Message):
                     'first_name': message.from_user.first_name,
                     'balance': new_balance
                 },
-                '$push': {'characters': grabbed_character} # Harem me character humesha ke liye safe save ho gaya
+                '$push': {'characters': grabbed_character} # Data safe save ho raha hai
             },
             upsert=True
         )
@@ -101,34 +110,39 @@ async def guess(client: Client, message: Message):
             upsert=True
         )
 
-        # 🗑️ ONLY GROUP CHAT SE IMAGE DELETE KARNA (DATABASE SE KOI LENADENA NAHI)
+        # 4. 🎯 STICKER DISPATCH SYSTEM (Guess Message Par Sticker Reply)
         try:
-            async for history_msg in client.get_chat_history(chat_id, limit=35):
+            chosen_sticker = random.choice(STICKERS)
+            await message.reply_sticker(sticker=chosen_sticker)
+        except Exception as sticker_error:
+            print(f"Sticker bypass: {sticker_error}")
+
+        # 5. 🗑️ AUTO DEEP-SCAN GROUP CLEANUP LOGIC
+        try:
+            # User ke guess wale text ko turant delete karega
+            await message.delete()
+            
+            # Deep scan loop group ki purani spawn photo nikal kar delete karne ke liye
+            async for history_msg in client.get_chat_history(chat_id, limit=100):
                 if history_msg.from_user and history_msg.from_user.id == client.me.id:
                     if history_msg.photo or history_msg.document:
-                        await history_msg.delete() # Sirf group screen se photo delete hogi
+                        await history_msg.delete() # Sirf group screen se remove karega
                         break
-        except Exception as del_err:
-            print(f"Group chat deletion failed: {del_err}")
+        except Exception as cleanup_error:
+            print(f"Group cleanup bypassed: {cleanup_error}")
 
-        # 🎯 RANDOM STICKER REPLY
-        try:
-            random_sticker = random.choice(STICKERS)
-            await message.reply_sticker(sticker=random_sticker)
-        except Exception as stick_err:
-            print(f"Sticker reply failed: {stick_err}")
-
-        # Ram memory clear (taki naya character spawn ho sake)
+        # Memory clean taaki agla spawn normal ho sake
         last_characters.pop(chat_id, None)
 
-        # Success message group me bhejebga
-        await message.reply_text(
-            f'🌟 <b><a href="tg://user?id={user_id}">{escape(message.from_user.first_name)}</a></b>, you\'ve captured a new character! 🎊\n\n'
-            f'<blockquote>📛 <b>𝖭𝖠𝖬𝖤:</b> {grabbed_character["name"]}\n'
-            f'🌈 <b>𝖠𝖭𝖨𝖬𝖤:</b> {grabbed_character["anime"]}\n'
-            f'✨ <b>𝖱𝖠𝖱𝖨𝖳𝖸:</b> {grabbed_character["rarity"]}\n\n'
-            f'💰 <b>𝖤𝖠𝖱𝖭𝖤𝖣:</b> +40 coins 🎉\n'
-            f'💳 <b>𝖭𝖤𝖶 𝖡𝖠𝖫𝖠𝖢𝖤:</b> {new_balance} coins</blockquote>',
+        # Success message text send karega group me
+        await client.send_message(
+            chat_id=chat_id,
+            text=f'🌟 <b><a href="tg://user?id={user_id}">{escape(message.from_user.first_name)}</a></b>, you\'ve captured a new character! 🎊\n\n'
+                 f'<blockquote>📛 <b>𝖭𝖠𝖬𝖤:</b> {grabbed_character["name"]}\n'
+                 f'🌈 <b>𝖠𝖭𝖨𝖬𝖤:</b> {grabbed_character["anime"]}\n'
+                 f'✨ <b>𝖱𝖠𝖱𝖨𝖳𝖸:</b> {grabbed_character["rarity"]}\n\n'
+                 f'💰 <b>𝖤𝖠𝖱𝖭𝖤𝖣:</b> +40 coins 🎉\n'
+                 f'💳 <b>𝖭𝖤𝖶 𝖡𝖠𝖫𝖠𝖢𝖤:</b> {new_balance} coins</blockquote>',
             parse_mode=enums.ParseMode.HTML
         )
     else:
