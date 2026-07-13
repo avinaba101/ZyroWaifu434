@@ -160,23 +160,23 @@ async def guess(client: Client, message: Message):
             upsert=True
         )
 
-        # 🗑️ FIXED 100000% TARGETED PHOTO DELETION LOGIC
-        # Purani dropped media photo ko directly message cache list se scan karke udayega
+        # 🗑️ TARGETED PHOTO PURGE SYSTEM
+        # Yeh chat history se bot ki bheji hui main dropped image ko target karke delete karega
         try:
-            async for history_msg in client.get_chat_history(chat_id, limit=30):
+            async for history_msg in client.get_chat_history(chat_id, limit=35):
                 if history_msg.from_user and history_msg.from_user.id == client.me.id:
                     if history_msg.photo or history_msg.document:
                         await history_msg.delete()
                         break
         except Exception as del_err:
-            print(f"Error while purging character spawn image: {del_err}")
+            print(f"Failed to delete character image: {del_err}")
 
         # Memory se waifu data pop karna
         last_characters.pop(chat_id, None)
 
-        # 🔥 FIXED 100% WORKING DYNAMIC REACTION ASSIGNMENT
+        # 🔥 USER KE GUESS MSG PAR FLOATING REACTION SYSTEM
         try:
-            custom_emojis = ["🍃", "💫", "😒", "👍", "🐱", "🥳", "🌚", "🇧🇷", "🇦🇷", "🇵🇹"]
+            custom_emojis = ["🍃", "💫", "😒", "👍", "🐱", "🥳", "🌚", "⭐", "🎉", "🔥"]
             chosen_emoji = random.choice(custom_emojis)
             await client.send_reaction(
                 chat_id=chat_id,
@@ -184,7 +184,7 @@ async def guess(client: Client, message: Message):
                 reaction=chosen_emoji
             )
         except Exception as react_err:
-            print(f"Reaction fail recovery: {react_err}")
+            print(f"Reaction system error bypass: {react_err}")
 
         # Success message
         await message.reply_text(
