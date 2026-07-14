@@ -235,7 +235,7 @@ async def start_mines(client: Client, message: Message):
     )
     
     await message.reply_photo(
-        photo="https://files.catbox.moe/szew66.png",
+        photo="https://i.ibb.co/d4Kj2sVj/file-164.jpg",
         caption=caption_text,
         parse_mode=enums.ParseMode.HTML,
         reply_markup=generate_keyboard(grid, game_id, player_id, 0, 0, num_mines)
