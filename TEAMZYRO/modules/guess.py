@@ -17,13 +17,43 @@ from datetime import datetime, timezone
 GUESS_COOLDOWN_TIME = 8  
 guess_cooldowns = {}
 
-# 🎭 RANDOM STICKERS LIST (Working Telegram Standard Stickers)
-STICKERS = [
-    "CAACAgIAAxkBAAEl4nFmR...", 
-    "CAACAgIAAxkBAAEl4nNmR...", 
-    "CAACAgIAAxkBAAEl4nVmR...", 
-    "CAACAgIAAxkBAAEl4ndmR..."
-]
+# 🎭 RANDOM EMOJI REACTIONS LIST
+REACTION_EMOJIS = ["🎉", "🔥", "❤️", "🌟", "⚡", "✨", "🏆", "💯"]
+
+# 💰 EXACT CUSTOM RARITY HIERARCHY COINS MAP
+RARITY_COINS = {
+    # Tumhara Specific Sequence Order
+    "common": 30,
+    "rare": 35,
+    "legendary": 40,
+    "medium": 45,
+    
+    # Events & Specials
+    "halloween": 50,
+    "christmas special": 50,
+    "events": 50,
+    
+    # Seasonal Tiers
+    "winter": 55,
+    "valentine": 55,
+    "rainy": 55,
+    "summer": 55,
+    
+    # High & Crystal Tiers
+    "crystal": 65,
+    "special edition": 65,
+    "limited edition": 75,
+    "premium edition": 85,
+    
+    # Ultra & God Tiers
+    "celestial": 95,
+    "omniversal": 110,
+    "cosplay master": 110,
+    
+    # Ultimate Highest Tier
+    "amv edition": 130,
+    "& amv edition": 130
+}
 
 @app.on_message(filters.command(["guess", "protecc", "collect", "grab", "hunt"]) & filters.group)
 async def guess(client: Client, message: Message):
@@ -84,18 +114,21 @@ async def guess(client: Client, message: Message):
         grabbed_character = last_characters[chat_id]
 
         # ⏳ SPEED / TIME TAKEN CALCULATION LOGIC
-        # Agar spawn file me timestamp save ho raha hai toh yeh exact seconds nikalega
         spawn_timestamp = grabbed_character.get('timestamp')
         if spawn_timestamp:
             elapsed_time = time.time() - spawn_timestamp
-            # Agar 1 second se kam laga toh decimal me dikhayega warna round figure me seconds dikhayega
             time_taken_str = f"{elapsed_time:.1f}s" if elapsed_time < 1 else f"{int(elapsed_time)}s"
         else:
-            time_taken_str = "Fast!" # Fallback agar main spawn file me timestamp missing ho
+            time_taken_str = "Fast!"
 
-        # 3. 💾 DATABASE COMMIT (100% SAFE - DATA DELETE NAHI HOGA)
+        # 💎 DYNAMIC COINS CALCULATOR (Custom Hierarchy Match)
+        character_rarity = grabbed_character.get("rarity", "").lower().strip()
+        # Custom dictionary se coins uthayega, nahi milne par fallback default 40 coins dega
+        earned_coins = RARITY_COINS.get(character_rarity, 40)
+
+        # 3. 💾 DATABASE COMMIT (100% Safe)
         user_data = await user_collection.find_one({'id': user_id})
-        new_balance = (user_data.get('balance', 0) if user_data else 0) + 40
+        new_balance = (user_data.get('balance', 0) if user_data else 0) + earned_coins
         
         await user_collection.update_one(
             {'id': user_id},
@@ -120,42 +153,42 @@ async def guess(client: Client, message: Message):
             upsert=True
         )
 
-        # 4. 🎯 STICKER DISPATCH SYSTEM (Guess Message Par Sticker Reply)
-        try:
-            chosen_sticker = random.choice(STICKERS)
-            await message.reply_sticker(sticker=chosen_sticker)
-        except Exception as sticker_error:
-            print(f"Sticker bypass: {sticker_error}")
-
-        # 5. 🗑️ AUTO DEEP-SCAN GROUP CLEANUP LOGIC
-        try:
-            # User ke guess wale text ko turant delete karega
-            await message.delete()
-            
-            # Deep scan loop group ki purani spawn photo nikal kar delete karne ke liye
-            async for history_msg in client.get_chat_history(chat_id, limit=100):
-                if history_msg.from_user and history_msg.from_user.id == client.me.id:
-                    if history_msg.photo or history_msg.document:
-                        await history_msg.delete() 
-                        break
-        except Exception as cleanup_error:
-            print(f"Group cleanup bypassed: {cleanup_error}")
-
-        # Memory clean taaki agla spawn normal ho sake
-        last_characters.pop(chat_id, None)
-
-        # Success message text send karega group me (Jisme ab TIME TAKEN bhi print hoga)
-        await client.send_message(
+        # 4. 📝 SEND CAPTURE STATUS RESPONSE
+        success_msg = await client.send_message(
             chat_id=chat_id,
             text=f'🌟 <b><a href="tg://user?id={user_id}">{escape(message.from_user.first_name)}</a></b>, you\'ve captured a new character! 🎊\n\n'
                  f'<blockquote>📛 <b>𝖭𝖠𝖬𝖤:</b> {grabbed_character["name"]}\n'
                  f'🌈 <b>𝖠𝖭𝖨𝖬𝖤:</b> {grabbed_character["anime"]}\n'
                  f'✨ <b>𝖱𝖠𝖱𝖨𝖳𝖸:</b> {grabbed_character["rarity"]}\n\n'
-                 f'⏱️ <b>𝖳𝖨𝖬𝖤 𝖳𝖠𝖪𝖤𝖭:</b> {time_taken_str}\n' # 👈 Yeh line speed aur dynamic time show karegi
-                 f'💰 <b>𝖤𝖠𝖱𝖭𝖤𝖣:</b> +40 coins 🎉\n'
+                 f'⏱️ <b>𝖳𝖨𝖬𝖤 𝖳𝖠𝖪𝖤𝖭:</b> {time_taken_str}\n' 
+                 f'💰 <b>𝖤𝖠𝖱𝖭𝖤𝖣:</b> +{earned_coins} coins 🎉\n' 
                  f'💳 <b>𝖭𝖤𝖶 𝖡𝖠𝖫𝖠𝖢𝖤:</b> {new_balance} coins</blockquote>',
             parse_mode=enums.ParseMode.HTML
         )
+
+        # 🎯 AUTOMATIC RANDOM EMOJI REACTION SYSTEM
+        try:
+            chosen_emoji = random.choice(REACTION_EMOJIS)
+            await client.send_reaction(chat_id=chat_id, message_id=success_msg.id, emoji=chosen_emoji)
+        except Exception as reaction_error:
+            print(f"Message reaction bypassed: {reaction_error}")
+
+        # Memory clean taaki agla spawn normal ho sake
+        last_characters.pop(chat_id, None)
+
+        # 5. 🗑️ 1-SECOND DELAY CHAT CLEANUP LOGIC
+        await asyncio.sleep(1) 
+        try:
+            await message.delete()
+            
+            async for history_msg in client.get_chat_history(chat_id, limit=100):
+                if history_msg.from_user and history_msg.from_user.id == client.me.id:
+                    if history_msg.photo or history_msg.document:
+                        await history_msg.delete()
+                        break
+        except Exception as cleanup_error:
+            print(f"Group cleanup bypassed: {cleanup_error}")
+
     else:
         await message.reply_text("🕵️‍♂️ ❌ Not quite right! Try again!", parse_mode=enums.ParseMode.HTML)
         
