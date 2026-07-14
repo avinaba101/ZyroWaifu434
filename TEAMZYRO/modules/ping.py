@@ -17,11 +17,11 @@ async def ping(client: Client, message: Message):
         return
         
     if not await is_vip_or_owner(user_id):
-        await message.reply_text("Nouu.. only Owner or VIP users can run this command..")
+        await message.reply_text("Why are you gay🙂 only Owner or VIP users can run this command😅🍃..")
         return
         
     start_time = time.time()
-    reply_msg = await message.reply_text('Pong!')
+    reply_msg = await message.reply_text('🇵🇹Pong!')
     end_time = time.time()
     
     elapsed_time = round((end_time - start_time) * 1000, 3)
