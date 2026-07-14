@@ -1,11 +1,11 @@
-<h1 align="center"><b>🌸 Waifu & Husbando Catcher Bot 🌸</b></h1> 
+<h1 align="center"><b>🌸 animeXcather re make by fushiguro🌸</b></h1> 
 
 <p align="center">
   <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif" alt="Divider">
 </p>
 
 <p align="center">
-  <img src="https://files.catbox.moe/gknnju.jpg" alt="Waifu Bot Poster" width="600" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+  <img src="https://i.ibb.co/vCCwc09s/file-146.jpg" alt="Waifu Bot Poster" width="600" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
 </p>
 
 <p align="center">
