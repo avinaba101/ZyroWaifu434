@@ -57,13 +57,13 @@ async def generate_start_message(client, message):
 async def generate_group_start_message(client):
     bot_user = await client.get_me()
     caption = (
-        f"🍃 𝖨'姆 <b>𝐀𝐧𝐢𝐦𝐞𝐗𝐜𝐚𝐭𝐜𝐡𝐞𝐫</b> 🫧\n\n"
+        f"🍃 𝖨'𝗆 <b>𝐀𝐧𝐢𝐦𝐞𝐗𝐜𝐚𝐭𝐜𝐡𝐞𝐫</b> 🫧\n\n"
         f"<blockquote>𝖨 𝗌𝗉𝖺𝗐𝗇 𝖺𝗇𝗂𝗆𝖾 𝖼𝗁𝖺𝗋𝖺𝖼𝗍𝖾𝗋𝗌 𝗂𝗇 𝗒𝗈𝗎𝗋 𝗀𝗋𝗈𝗎𝗉 𝗐𝗂𝗍𝗁 𝗍𝗂𝗆𝖾 𝗂𝗇𝗍𝖾𝗋𝗏𝖺𝗅𝗌 𝖿𝗈𝗋 𝗉𝗅𝖺𝗒𝖾ʀ𝗌 𝗍𝗈 /guess.\n"
         f"𝖴𝗌𝖾 /help 𝖿ᴏʀ ᴍᴏʀᴇ ɪɴғᴏ.</blockquote>"
     )
     buttons = [
         [
-            InlineKeyboardButton("Aᴅ點 Mᴇ", url=f"https://t.me/{bot_user.username}?startgroup=true"),
+            InlineKeyboardButton("Aᴅᴅ Mᴇ", url=f"https://t.me/{bot_user.username}?startgroup=true"),
             InlineKeyboardButton("Sᴜᴘᴘᴏʀᴛ", url="https://t.me/+hLhjBd4AT3cyNzFl")
         ]
     ]
