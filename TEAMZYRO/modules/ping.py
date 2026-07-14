@@ -25,4 +25,4 @@ async def ping(client: Client, message: Message):
     end_time = time.time()
     
     elapsed_time = round((end_time - start_time) * 1000, 3)
-    await reply_msg.edit_text(f'Pong! {elapsed_time}ms')
+    await reply_msg.edit_text(f'Pong🍃🇵🇹! {elapsed_time}ms')
