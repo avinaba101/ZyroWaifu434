@@ -225,7 +225,7 @@ async def start_mines(client: Client, message: Message):
     }
     
     caption_text = (
-        "🎮 <b>Minesweeper Casino</b> 🎮\n"
+        "🎮 <b>Mines game predict your luck</b> 🎮\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         f"👤 <b>Player:</b> {message.from_user.first_name}\n"
         f"💰 <b>Bet Amount:</b> <code>{bet:,}</code> coins\n"
