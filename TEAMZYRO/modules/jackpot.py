@@ -34,10 +34,11 @@ async def basket(bot, message):
     last_played = user_data.get("last_played")
     plays_today = user_data.get("plays_today", 0)
 
-    if last_played == str(today) and plays_today >= 2:
+    # 🔥 CHANGED: 2 → 3 (Now 3 jackpots per day)
+    if last_played == str(today) and plays_today >= 3:
         await message.reply_text(
             f"🎰 <b>𝖩𝖠𝖢𝖪𝖯𝖮𝖳</b>\n\n"
-            f"<blockquote>❌ You can only play the jackpot twice per day. Try again tomorrow!</blockquote>",
+            f"<blockquote>❌ You can only play the jackpot three times per day. Try again tomorrow!</blockquote>",
             parse_mode=enums.ParseMode.HTML
         )
         return
@@ -81,4 +82,3 @@ async def basket(bot, message):
         quote=True,
         parse_mode=enums.ParseMode.HTML
     )
-    
