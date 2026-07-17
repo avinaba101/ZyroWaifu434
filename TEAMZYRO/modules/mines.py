@@ -38,9 +38,9 @@ rarity_map = {
 GRID_SIZE = 4      # Upgraded to 4x4 Grid
 MIN_BET = 100
 MAX_BET = 100000
-MIN_MINES = 2      # Changed from 3 to 2
+MIN_MINES = 3
 MAX_MINES = 5
-MAX_MINE_HITS = 2  # Changed from 1 to 2 (2 mine hits = game over)
+MAX_MINE_HITS = 1  # 1 mine hit is game over
 
 # Math Combinations
 def nCr(n, r):
@@ -231,7 +231,7 @@ async def start_mines(client: Client, message: Message):
         f"💰 <b>Bet Amount:</b> <code>{bet:,}</code> coins\n"
         f"💣 <b>Mines Hidden:</b> <code>{num_mines}</code>\n\n"
         "💎 Sweep the 4x4 grid and open safe cells to increase your multiplier!\n"
-        f"⚠️ Watch out for hidden mines! You can survive {MAX_MINE_HITS} mine hits!"
+        "⚠️ Watch out for hidden mines!"
     )
     
     await message.reply_photo(
@@ -267,48 +267,30 @@ async def handle_mine_click(client: Client, callback_query):
     if (x, y) in mines:
         state['mine_hits'] += 1
         grid[x][y] = 2
-        mine_hits = state['mine_hits']
         
-        # Check if game over after this hit
-        if mine_hits >= MAX_MINE_HITS:
-            # Game Over - Reveal board
-            for r_x in range(GRID_SIZE):
-                for r_y in range(GRID_SIZE):
-                    if (r_x, r_y) in mines:
-                        if grid[r_x][r_y] != 2:
-                            grid[r_x][r_y] = 3
-                    else:
-                        if grid[r_x][r_y] != 1:
-                            grid[r_x][r_y] = 4
-            
-            caption = (
-                "💥 <b>BOOM! Game Over!</b> 💥\n"
-                "━━━━━━━━━━━━━━━━━━━━\n"
-                f"You hit {MAX_MINE_HITS} mines and lost your bet of <b>{bet:,} coins</b>!\n\n"
-                "💣 = Mine Locations | ✨ = Safe Boxes"
-            )
-            await callback_query.message.edit_text(
-                caption,
-                parse_mode=enums.ParseMode.HTML,
-                reply_markup=generate_keyboard(grid, game_id, player_id, safe_opened, state['mine_hits'], num_mines)
-            )
-            del game_state[user_id]
-            return
-        else:
-            # Player still alive after 1 mine hit
-            caption = (
-                "💥 <b>Mine Hit! But you survived!</b> 💥\n"
-                "━━━━━━━━━━━━━━━━━━━━\n"
-                f"You hit a mine! ({mine_hits}/{MAX_MINE_HITS} hits used)\n"
-                f"💎 <b>Diamonds Found:</b> {safe_opened}\n"
-                f"⚠️ <b>Be careful!</b> One more mine and game over!"
-            )
-            await callback_query.message.edit_text(
-                caption,
-                parse_mode=enums.ParseMode.HTML,
-                reply_markup=generate_keyboard(grid, game_id, player_id, safe_opened, state['mine_hits'], num_mines)
-            )
-            return
+        # Game Over - Reveal board
+        for r_x in range(GRID_SIZE):
+            for r_y in range(GRID_SIZE):
+                if (r_x, r_y) in mines:
+                    if grid[r_x][r_y] != 2:
+                        grid[r_x][r_y] = 3
+                else:
+                    if grid[r_x][r_y] != 1:
+                        grid[r_x][r_y] = 4
+        
+        caption = (
+            "💥 <b>BOOM! Game Over!</b> 💥\n"
+            "━━━━━━━━━━━━━━━━━━━━\n"
+            f"You hit a mine and lost your bet of <b>{bet:,} coins</b>!\n\n"
+            "💣 = Mine Locations | ✨ = Safe Boxes"
+        )
+        await callback_query.message.edit_text(
+            caption,
+            parse_mode=enums.ParseMode.HTML,
+            reply_markup=generate_keyboard(grid, game_id, player_id, safe_opened, state['mine_hits'], num_mines)
+        )
+        del game_state[user_id]
+        return
     else:
         grid[x][y] = 1
         state['safe_opened'] += 1
@@ -348,7 +330,6 @@ async def handle_mine_click(client: Client, callback_query):
             "💎 <b>Safe Cell Opened!</b> 💎\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
             f"💎 <b>Diamonds Found:</b> {safe_opened} / {total_safes}\n"
-            f"💥 <b>Mines Hit:</b> {state['mine_hits']}/{MAX_MINE_HITS}\n"
             f"📈 <b>Multiplier:</b> {mult}x\n"
             f"💵 <b>Current Valuation:</b> <code>{int(bet * mult):,}</code> coins"
         )
